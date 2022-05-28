@@ -11,27 +11,17 @@ import (
 	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify"
 )
 
-const redirectURL = "http://localhost:42069/callback/"
-
 var (
-	ch     = make(chan *spotify.Client)
 	client *spotify.Client
 )
 
+func init() {
+}
+
 func main() {
-	// load env vars
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	// // spotify setup
-	auth.Auth.SetAuthInfo(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
-
 	// // http server setup
 	http.HandleFunc("/callback/", auth.CompleteAuth)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +30,7 @@ func main() {
 
 	go http.ListenAndServe(":42069", nil)
 
-	url := auth.Auth.AuthURL(auth.State)
-	go fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+	go fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", auth.Auth.AuthURL(auth.State))
 
 	client := <-auth.Ch
 
