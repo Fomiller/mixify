@@ -26,7 +26,7 @@ var (
 	State = "abc123"
 )
 
-func init() {
+func Init() {
 	// load env vars
 	err := godotenv.Load(".env")
 	if err != nil {
