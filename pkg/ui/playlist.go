@@ -2,22 +2,28 @@ package ui
 
 type listItem struct {
 	selected bool
+	detail   detail
 }
 
 type playlist struct {
-	listItem
 	name        string
 	description string
 	tracks      []string
+}
+
+type detail interface {
+	Name() string
+	Description() string
 }
 
 type playlists struct {
 	list []playlist
 }
 
-// func (i playlist) Title() string       { return i.name }
-// func (i playlist) Description() string { return i.description }
-// func (i playlist) FilterValue() string { return i.name }
+func (p playlist) Name() string        { return p.name }
+func (p playlist) Description() string { return p.description }
+
+// func (d detail) FilterValue() string { return d.name }
 
 var Playlist = playlists{
 	list: []playlist{

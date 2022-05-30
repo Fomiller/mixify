@@ -65,12 +65,12 @@ func choiceView(m Model) string {
 
 		// Is this choice selected?
 		checked := " " // not selected
-		if _, ok := m.selected[i]; ok {
+		if choice.selected {
 			checked = "x" // selected!
 		}
 
 		// Render the row
-		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.name)
+		output += fmt.Sprintf("%s [%s] %v\n", cursor, checked, choice.detail.Name())
 	}
 
 	// The footer
