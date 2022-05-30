@@ -14,6 +14,15 @@ type randomItemGenerator struct {
 	shuffle    *sync.Once
 }
 
+type item struct {
+	title       string
+	description string
+}
+
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.description }
+func (i item) FilterValue() string { return i.title }
+
 func (r *randomItemGenerator) reset() {
 	r.mtx = &sync.Mutex{}
 	r.shuffle = &sync.Once{}
