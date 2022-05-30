@@ -7,11 +7,39 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
+	case statusMsg:
+		m.status = int(msg)
+		// m.state = ""
+		return m, nil
+
+	case errMsg:
+		m.err = msg
+		return m, tea.Quit
+
 	// Is it a key press?
 	case tea.KeyMsg:
 
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
+
+		case "v":
+			m.choices = nil
+			// var trackList []string
+			// loop over selected map
+			for _, v := range m.selected {
+				// loop over playlists
+				for _, vv := range Playlist.list {
+					if vv.name == v {
+						for _, track := range vv.tracks {
+							// trackList = append(trackList, track)
+							m.choices = append(m.choices, track)
+						}
+					}
+				}
+			}
+			m.selected = nil
+			// m.state = "server"
+			// cmd := tea.Sequentially(checkServer, tea.Quit)
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
@@ -36,7 +64,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok {
 				delete(m.selected, m.cursor)
 			} else {
-				m.selected[m.cursor] = struct{}{}
+				m.selected[m.cursor] = m.choices[m.cursor]
 			}
 		}
 	}
