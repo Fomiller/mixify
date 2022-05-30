@@ -6,7 +6,7 @@ import (
 )
 
 func (m Model) View() string {
-	switch m.currentView {
+	switch m.view {
 
 	case "playlistView":
 		return playlistView(m)

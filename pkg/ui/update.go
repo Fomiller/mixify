@@ -9,7 +9,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case statusMsg:
 		m.status = int(msg)
-		// m.currentView = ""
+		// m.view = ""
 		return m, nil
 
 	case errMsg:
@@ -22,25 +22,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
 
+		// view tracks of selected playlists
 		case "v":
-			m.currentView = "trackView"
-			// m.choices = nil
-			// // var trackList []string
-			// // loop over selected map
-			// for _, v := range m.selected {
-			// 	// loop over playlists
-			// 	for _, vv := range Playlist.list {
-			// 		if vv.name == v {
-			// 			for _, track := range vv.tracks {
-			// 				// trackList = append(trackList, track)
-			// 				m.choices = append(m.choices, track)
-			// 			}
-			// 		}
-			// 	}
-			// }
-			// m.selected = nil
-			// m.currentView = "server"
-			// cmd := tea.Sequentially(checkServer, tea.Quit)
+			m.viewList = append(m.viewList, m.view)
+			m.view = "trackView"
+
+		// return to previous view with backspace
+		case tea.KeyBackspace.String():
+			// set the new view to the previous view
+			m.view = m.viewList[len(m.viewList)-1]
+			// remove the old view
+			m.viewList = m.viewList[:len(m.viewList)-1]
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
