@@ -9,7 +9,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case statusMsg:
 		m.status = int(msg)
-		// m.state = ""
+		// m.currentView = ""
 		return m, nil
 
 	case errMsg:
@@ -23,22 +23,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		case "v":
-			m.choices = nil
-			// var trackList []string
-			// loop over selected map
-			for _, v := range m.selected {
-				// loop over playlists
-				for _, vv := range Playlist.list {
-					if vv.name == v {
-						for _, track := range vv.tracks {
-							// trackList = append(trackList, track)
-							m.choices = append(m.choices, track)
-						}
-					}
-				}
-			}
-			m.selected = nil
-			// m.state = "server"
+			m.currentView = "trackView"
+			// m.choices = nil
+			// // var trackList []string
+			// // loop over selected map
+			// for _, v := range m.selected {
+			// 	// loop over playlists
+			// 	for _, vv := range Playlist.list {
+			// 		if vv.name == v {
+			// 			for _, track := range vv.tracks {
+			// 				// trackList = append(trackList, track)
+			// 				m.choices = append(m.choices, track)
+			// 			}
+			// 		}
+			// 	}
+			// }
+			// m.selected = nil
+			// m.currentView = "server"
 			// cmd := tea.Sequentially(checkServer, tea.Quit)
 
 		// These keys should exit the program.

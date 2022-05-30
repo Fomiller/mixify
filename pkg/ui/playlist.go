@@ -1,6 +1,11 @@
 package ui
 
+type listItem struct {
+	selected bool
+}
+
 type playlist struct {
+	listItem
 	name        string
 	description string
 	tracks      []string
@@ -10,9 +15,9 @@ type playlists struct {
 	list []playlist
 }
 
-func (i playlist) Title() string       { return i.name }
-func (i playlist) Description() string { return i.description }
-func (i playlist) FilterValue() string { return i.name }
+// func (i playlist) Title() string       { return i.name }
+// func (i playlist) Description() string { return i.description }
+// func (i playlist) FilterValue() string { return i.name }
 
 var Playlist = playlists{
 	list: []playlist{
