@@ -14,9 +14,6 @@ func (m Model) View() string {
 	case "trackView":
 		return trackView(m)
 
-	case "choiceView":
-		return choiceView(m)
-
 	default:
 		return choiceView(m)
 	}
@@ -30,23 +27,24 @@ func playlistView(m Model) string {
 func trackView(m Model) string {
 	var output string
 
-	for i, playlist := range m.selected {
+	for i, choice := range m.choices {
+		cursor := " " // no cursor
+		if m.cursor == i {
+			cursor = ">" // cursor!
+		}
 
-		for _, track := range playlist.tracks {
+		// Is this choice selected?
+		checked := " " // not selected
+		if choice.selected {
+			checked = "x" // selected!
+		}
+
+		choice, ok := choice.detail.(track)
+		if ok {
+			// for _, track := range choice {
 			// Is the cursor pointing at this choice?
-			cursor := " " // no cursor
-			if m.cursor == i {
-				cursor = ">" // cursor!
-			}
-
-			// Is this choice selected?
-			checked := " " // not selected
-			if _, ok := m.selected[i]; ok {
-				checked = "x" // selected!
-			}
-
 			// Render the row
-			output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, track)
+			output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.name)
 		}
 	}
 	return output
@@ -54,6 +52,7 @@ func trackView(m Model) string {
 
 func choiceView(m Model) string {
 	var output string
+
 	// Iterate over our choices
 	for i, choice := range m.choices {
 
@@ -70,7 +69,10 @@ func choiceView(m Model) string {
 		}
 
 		// Render the row
-		output += fmt.Sprintf("%s [%s] %v\n", cursor, checked, choice.detail.Name())
+		choice, ok := choice.detail.(playlist)
+		if ok {
+			output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Name())
+		}
 	}
 
 	// The footer

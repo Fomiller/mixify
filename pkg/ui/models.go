@@ -22,6 +22,7 @@ func NewModel() Model {
 		m.choices = append(m.choices, item)
 	}
 
+	m.viewList = []string{"choiceView"}
 	m.selected = make(map[int]playlist)
 	return m
 }

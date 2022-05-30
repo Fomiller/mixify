@@ -2,7 +2,7 @@ package ui
 
 type listItem struct {
 	selected bool
-	detail   detail
+	detail   interface{}
 }
 
 type playlist struct {
@@ -11,17 +11,33 @@ type playlist struct {
 	tracks      []string
 }
 
-type detail interface {
-	Name() string
-	Description() string
+type track struct {
+	name string
 }
 
 type playlists struct {
 	list []playlist
 }
 
+type detail interface {
+	Name() string
+	// Description() string
+	// Tracks() []string
+}
+
+type playlistDetail interface {
+	detail
+	Description() string
+	Tracks() []string
+}
+
+type trackDetail interface {
+	Name() string
+}
+
 func (p playlist) Name() string        { return p.name }
 func (p playlist) Description() string { return p.description }
+func (p playlist) Tracks() []string    { return p.tracks }
 
 // func (d detail) FilterValue() string { return d.name }
 

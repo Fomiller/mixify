@@ -24,15 +24,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// view tracks of selected playlists
 		case "v":
-			m.viewList = append(m.viewList, m.view)
+			var newChoices []listItem
+			for _, choice := range m.choices {
+				if choice.selected {
+					choice, ok := choice.detail.(playlist)
+					if ok {
+						for _, value := range choice.tracks {
+							item := listItem{
+								selected: false,
+								detail:   track{name: value},
+							}
+							newChoices = append(newChoices, item)
+						}
+					}
+
+				}
+			}
+
+			m.choices = newChoices
 			m.view = "trackView"
+			m.viewList = append(m.viewList, m.view)
+			m.cursor = 0
 
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
 			// set the new view to the previous view
-			m.view = m.viewList[len(m.viewList)-1]
-			// remove the old view
 			m.viewList = m.viewList[:len(m.viewList)-1]
+			m.view = m.viewList[len(m.viewList)-1]
+			// m.view = "choiceView"
+			// remove the old view
+
+			// // reset choices
+			if m.view == "choiceView" {
+				m = NewModel()
+			}
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
