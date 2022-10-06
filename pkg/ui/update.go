@@ -42,22 +42,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.choices = newChoices
-			m.view = "trackView"
+			m.view = "playlist"
 			m.viewList = append(m.viewList, m.view)
 			m.cursor = 0
 
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
+			// OLD CODE FROM PRE REVIVAL
 			// set the new view to the previous view
-			m.viewList = m.viewList[:len(m.viewList)-1]
-			m.view = m.viewList[len(m.viewList)-1]
+			// m.viewList = m.viewList[:len(m.viewList)-1]
+			// m.view = m.viewList[len(m.viewList)-1]
 			// m.view = "choiceView"
 			// remove the old view
 
 			// // reset choices
-			if m.view == "choiceView" {
-				m = NewModel()
-			}
+			// if m.view == "choiceView" {
+			// 	m = NewModel()
+			// }
+			m.view = MENU
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":

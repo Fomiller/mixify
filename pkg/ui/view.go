@@ -8,11 +8,17 @@ import (
 func (m Model) View() string {
 	switch m.view {
 
-	case "playlistView":
+	case "menu":
+		return menuView(m)
+
+	case "playlist":
 		return playlistView(m)
 
-	case "trackView":
+	case "track":
 		return trackView(m)
+
+	case "test":
+		return menuView(m)
 
 	default:
 		return choiceView(m)
@@ -83,7 +89,39 @@ func choiceView(m Model) string {
 func serverView(m Model) string {
 	var output string
 	// Send the UI for rendering
-	output = fmt.Sprintf("Checking %s ... ", url)
+	output = fmt.Sprintf("Checking %s ... %s", url, m.view)
+
+	if m.err != nil {
+		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
+	}
+
+	if m.status > 0 {
+		output += fmt.Sprintf("%d %s!", m.status, http.StatusText(m.status))
+	}
+	return output
+}
+
+func menuView(m Model) string {
+	var output string
+	state := m.views[MENU]
+	// Send the UI for rendering
+	newState := state.(menuModel)
+	output = fmt.Sprintf("Checking MENU %s ... %v", url, newState.tag)
+
+	if m.err != nil {
+		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
+	}
+
+	if m.status > 0 {
+		output += fmt.Sprintf("%d %s!", m.status, http.StatusText(m.status))
+	}
+	return output
+}
+
+func testView(m Model) string {
+	var output string
+	// Send the UI for rendering
+	output = fmt.Sprintf("Checking %s ... %s", url, m.view)
 
 	if m.err != nil {
 		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
