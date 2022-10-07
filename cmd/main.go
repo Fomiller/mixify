@@ -43,7 +43,7 @@ func main() {
 	// // tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(ui.NewModel()).Start(); err != nil {
+	if err := tea.NewProgram(ui.New()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

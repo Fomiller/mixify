@@ -1,11 +1,42 @@
 package ui
 
-type listItem struct {
+import tea "github.com/charmbracelet/bubbletea"
+
+// PLAYLIST
+type playlistModel struct {
+	choices []ListItem
+	cursor  int
+	status  int
+	err     error
+	state   string
+	view    view
+}
+
+func newPlaylistModel() tea.Model {
+	m := playlistModel{}
+	m.view = PLAYLIST
+	return m
+}
+
+func (m playlistModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m playlistModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	return m, cmd
+}
+
+func (m playlistModel) View() string {
+	return ""
+}
+
+type ListItem struct {
 	selected bool
 	detail   interface{}
 }
 
-type playlist struct {
+type Playlist struct {
 	name        string
 	description string
 	tracks      []string
@@ -15,8 +46,8 @@ type track struct {
 	name string
 }
 
-type playlists struct {
-	list []playlist
+type Playlists struct {
+	list []Playlist
 }
 
 type detail interface {
@@ -35,14 +66,14 @@ type trackDetail interface {
 	Name() string
 }
 
-func (p playlist) Name() string        { return p.name }
-func (p playlist) Description() string { return p.description }
-func (p playlist) Tracks() []string    { return p.tracks }
+func (p Playlist) Name() string        { return p.name }
+func (p Playlist) Description() string { return p.description }
+func (p Playlist) Tracks() []string    { return p.tracks }
 
 // func (d detail) FilterValue() string { return d.name }
 
-var Playlist = playlists{
-	list: []playlist{
+var PlaylistList = Playlists{
+	list: []Playlist{
 		{
 			name:        "playlist_01",
 			description: "raggae music",
