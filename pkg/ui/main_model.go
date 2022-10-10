@@ -2,8 +2,8 @@ package ui
 
 import (
 	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
-	"net/http"
 )
 
 type view string
@@ -13,43 +13,40 @@ const (
 	PLAYLIST view = "playlist"
 	TRACK    view = "track"
 	TEST     view = "test"
+	CHOICE   view = "choice"
+	MAIN     view = "main"
 )
 
 // MAIN MODEL
 type mainModel struct {
-	view     view
-	views    map[view]tea.Model
-	viewList []view //list of previous views, this could be a linked list ?
-
-	choices   []ListItem       // items on the to-do list
-	selected  map[int]Playlist // which to-do items are selected
-	playlists map[int]Playlist // which to-do items are selected
-
-	cursor int // which to-do list item our cursor is pointing at, This could be pulled into a nested model?
-	status int
-	err    error
-	state  string
+	state   view
+	view    view
+	views   map[view]tea.Model
+	choices []ListItem // items on the to-do list
+	cursor  int        // which to-do list item our cursor is pointing at, This could be pulled into a nested model?
+	status  int
+	err     error
 }
 
 func New() mainModel {
-	var m mainModel
-	for _, v := range PlaylistList.list {
+	// init main model values
+	m := mainModel{
+		state: MAIN,
+		views: map[view]tea.Model{
+			PLAYLIST: newPlaylistModel(),
+			TRACK:    newTrackModel(),
+		},
+	}
+
+	// init choices
+	for i := range m.views {
 		item := ListItem{
 			selected: false,
-			detail:   v,
+			detail:   i,
 		}
 		m.choices = append(m.choices, item)
 	}
 
-	m.view = MENU
-	m.views = make(map[view]tea.Model)
-
-	m.views[MENU] = newMenuModel()
-	m.views[TEST] = newTestModel()
-	m.views[PLAYLIST] = newTestModel()
-	m.views[TRACK] = newTestModel()
-
-	m.selected = make(map[int]Playlist)
 	return m
 }
 
@@ -58,151 +55,94 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func (m mainModel) View() string {
-	switch m.view {
-
-	case "menu":
-		return menuView(m)
+	switch m.state {
 
 	case "playlist":
-		return playlistView(m)
+		return m.views[PLAYLIST].View()
 
 	case "track":
-		return trackView(m)
+		return m.views[TRACK].View()
 
 	case "test":
-		return menuView(m)
+		return m.views[TEST].View()
 
 	default:
-		return choiceView(m)
+		return MainMenu(m)
 	}
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
-	case statusMsg:
-		m.status = int(msg)
-		// m.view = ""
-		return m, nil
+	switch msg.(type) {
+	case backMsg:
+		m.state = MAIN
+	}
 
-	case errMsg:
-		m.err = msg
-		return m, tea.Quit
+	switch m.state {
 
-	// Is it a key press?
-	case tea.KeyMsg:
+	case PLAYLIST:
+		_, newCmd := m.views[PLAYLIST].Update(msg)
+		cmd = newCmd
 
-		// Cool, what was the actual key pressed?
-		switch msg.String() {
+	case TRACK:
+		_, newCmd := m.views[TRACK].Update(msg)
+		cmd = newCmd
 
-		// view tracks of selected playlists
-		case "v":
-			var newChoices []ListItem
-			for _, choice := range m.choices {
-				if choice.selected {
-					choice, ok := choice.detail.(Playlist)
-					if ok {
-						for _, value := range choice.tracks {
-							item := ListItem{
-								selected: false,
-								detail:   track{name: value},
-							}
-							newChoices = append(newChoices, item)
-						}
-					}
+	// if the state is MAIN
+	default:
+		switch msg := msg.(type) {
+		case statusMsg:
+			m.status = int(msg)
+			return m, nil
 
-				}
-			}
-
-			m.choices = newChoices
-			m.view = "playlist"
-			m.viewList = append(m.viewList, m.view)
-			m.cursor = 0
-
-		// return to previous view with backspace
-		case tea.KeyBackspace.String():
-			// OLD CODE FROM PRE REVIVAL
-			// set the new view to the previous view
-			// m.viewList = m.viewList[:len(m.viewList)-1]
-			// m.view = m.viewList[len(m.viewList)-1]
-			// m.view = "choiceView"
-			// remove the old view
-
-			// // reset choices
-			// if m.view == "choiceView" {
-			// 	m = NewModel()
-			// }
-			m.view = MENU
-
-		// These keys should exit the program.
-		case "ctrl+c", "q":
+		case errMsg:
+			m.err = msg
 			return m, tea.Quit
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+		// Is it a key press?
+		case tea.KeyMsg:
+			switch msg.String() {
+			// return to previous view with backspace
+			case tea.KeyBackspace.String():
+				m.state = MAIN
 
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
+			// These keys should exit the program.
+			case "ctrl+c", "q":
+				return m, tea.Quit
 
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.choices[m.cursor].selected = !m.choices[m.cursor].selected
+			// The "up" and "k" keys move the cursor up
+			case "up", "k":
+				if m.cursor > 0 {
+					m.cursor--
+				}
+
+			// The "down" and "j" keys move the cursor down
+			case "down", "j":
+				if m.cursor < len(m.choices)-1 {
+					m.cursor++
+				}
+
+			// The "enter" key and the spacebar (a literal space) toggle
+			// the selected state for the item that the cursor is pointing at.
+			case "enter", " ":
+				m.state = m.choices[m.cursor].detail.(view)
+			}
 		}
-	}
 
+	}
 	// Return the updated model to the Bubble Tea runtime for processing.
 	// Note that we're not returning a command.
-	return m, nil
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
+
 }
 
-func playlistView(m mainModel) string {
+func MainMenu(m mainModel) string {
 	var output string
-	state := m.views[PLAYLIST].(playlistModel)
 
-	output += fmt.Sprintf("STATE: %s\n", state.view)
-	return output
-}
-
-func trackView(m mainModel) string {
-	var output string
-	state := m.views[TRACK].(trackModel)
-
-	for i, choice := range m.choices {
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Is this choice selected?
-		checked := " " // not selected
-		if choice.selected {
-			checked = "x" // selected!
-		}
-
-		choice, ok := choice.detail.(track)
-		if ok {
-			// for _, track := range choice {
-			// Is the cursor pointing at this choice?
-			// Render the row
-			output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.name)
-		}
-	}
-	output += fmt.Sprintf("STATE: %s\n", state.view)
-	return output
-}
-
-func choiceView(m mainModel) string {
-	var output string
-	state := m.views[TEST].(testModel)
-
-	// Iterate over our choices
+	// Iterate over our choices and create menu items
 	for i, choice := range m.choices {
 
 		// Is the cursor pointing at this choice?
@@ -218,67 +158,12 @@ func choiceView(m mainModel) string {
 		}
 
 		// Render the row
-		choice, ok := choice.detail.(Playlist)
-		if ok {
-			output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Name())
-		}
+		choice := choice.detail
+		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+
 	}
-	output += fmt.Sprintf("STATE: %s\n", state.view)
 
 	// The footer
 	output += "\nPress q to quit.\n"
-	return output
-}
-
-func serverView(m mainModel) string {
-	var output string
-	state := m.views[TRACK].(trackModel)
-
-	// Send the UI for rendering
-	output = fmt.Sprintf("Checking %s ... %s", url, m.view)
-
-	if m.err != nil {
-		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
-	}
-
-	if m.status > 0 {
-		output += fmt.Sprintf("%d %s!", m.status, http.StatusText(m.status))
-	}
-	output += fmt.Sprintf("STATE: %s\n", state.view)
-	return output
-}
-
-func menuView(m mainModel) string {
-	var output string
-	state := m.views[MENU].(menuModel)
-
-	// Send the UI for rendering
-	output = fmt.Sprintf("Checking MENU %s ... %v", url, state.tag)
-
-	if m.err != nil {
-		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
-	}
-
-	if m.status > 0 {
-		output += fmt.Sprintf("%d %s!", m.status, http.StatusText(m.status))
-	}
-	output += fmt.Sprintf("STATE: %s\n", state.view)
-	return output
-}
-
-func testView(m mainModel) string {
-	var output string
-	state := m.views[TEST].(testModel)
-	// Send the UI for rendering
-	output = fmt.Sprintf("Checking %s ... %s", url, m.view)
-
-	if m.err != nil {
-		return fmt.Sprintf("\nWe had some trouble: Q%v\n\n", m.err)
-	}
-
-	if m.status > 0 {
-		output += fmt.Sprintf("%d %s!", m.status, http.StatusText(m.status))
-	}
-	output += fmt.Sprintf("STATE: %s\n", state.view)
 	return output
 }
