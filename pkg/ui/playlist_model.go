@@ -104,7 +104,7 @@ func (m playlistModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// The "enter" key and the spacebar (a literal space) toggle
 		// the selected state for the item that the cursor is pointing at.
 		case "enter", " ":
-			m.view = m.choices[m.cursor].detail.(view)
+			m.choices[m.cursor].selected = !m.choices[m.cursor].selected
 		}
 	}
 
@@ -171,8 +171,6 @@ type Playlists struct {
 
 type detail interface {
 	Name() string
-	// Description() string
-	// Tracks() []string
 }
 
 type playlistDetail interface {

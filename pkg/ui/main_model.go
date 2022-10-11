@@ -83,8 +83,13 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.state {
 
 	case PLAYLIST:
-		_, newCmd := m.views[PLAYLIST].Update(msg)
+		model, newCmd := m.views[PLAYLIST].Update(msg)
+		playlistModel, ok := model.(playlistModel)
+		if !ok {
+			panic("could not perfom assertion on playlist model")
+		}
 		cmd = newCmd
+		m.views[PLAYLIST] = playlistModel
 
 	case TRACK:
 		_, newCmd := m.views[TRACK].Update(msg)
