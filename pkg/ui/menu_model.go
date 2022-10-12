@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 // MENU
 type menuModel struct {
-	choices []ListItem
+	choices []playlist.ListItem
 	tag     string
 	cursor  int
 	status  int

@@ -1,12 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"net/http"
+	"os"
 
-	"github.com/Fomiller/mixify/pkg/auth"
+	"github.com/Fomiller/mixify/pkg/ui"
+	tea "github.com/charmbracelet/bubbletea"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 )
 
@@ -30,40 +29,40 @@ var (
 
 func main() {
 	// // // http server setup
-	http.HandleFunc("/callback/", auth.CompleteAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
-	go http.ListenAndServe(":42069", nil)
+	// http.HandleFunc("/callback/", auth.CompleteAuth)
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	log.Println("Got request for:", r.URL.String())
+	// })
+	// go http.ListenAndServe(":42069", nil)
 
-	url := auth.Auth.AuthURL(auth.State)
-	fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", url)
+	// url := auth.Auth.AuthURL(auth.State)
+	// fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", url)
 
-	client := <-auth.Ch
+	// client := <-auth.Ch
 
-	// // use the client to make calls that require authorization
-	user, err := client.CurrentUser(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // // use the client to make calls that require authorization
+	// user, err := client.CurrentUser(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("You are logged in as:", user.ID)
+	// fmt.Println("You are logged in as:", user.ID)
 
-	// _, playlist, err := client.FeaturedPlaylists()
-	playlist, err := client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // _, playlist, err := client.FeaturedPlaylists()
+	// playlist, err := client.CurrentUsersPlaylists(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	p := playlist.Playlists[0]
-	fmt.Println("Playlist: ", p)
-	fmt.Println("ID: ", p.ID)
+	// p := playlist.Playlists[0]
+	// fmt.Println("Playlist: ", p)
+	// fmt.Println("ID: ", p.ID)
 
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	// if err := tea.NewProgram(ui.New()).Start(); err != nil {
-	// 	fmt.Println("Error running program:", err)
-	// 	os.Exit(1)
-	// }
+	if err := tea.NewProgram(ui.New()).Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
 }

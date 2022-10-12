@@ -3,6 +3,9 @@ package ui
 import (
 	"fmt"
 
+	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,8 +25,8 @@ type mainModel struct {
 	state   view
 	view    view
 	views   map[view]tea.Model
-	choices []ListItem // items on the to-do list
-	cursor  int        // which to-do list item our cursor is pointing at, This could be pulled into a nested model?
+	choices []playlist.ListItem // items on the to-do list
+	cursor  int                 // which to-do list item our cursor is pointing at, This could be pulled into a nested model?
 	status  int
 	err     error
 }
@@ -33,16 +36,16 @@ func New() mainModel {
 	m := mainModel{
 		state: MAIN,
 		views: map[view]tea.Model{
-			PLAYLIST: newPlaylistModel(),
-			TRACK:    newTrackModel(),
+			PLAYLIST: playlist.New(),
+			TRACK:    track.New(),
 		},
 	}
 
 	// init choices
 	for i := range m.views {
-		item := ListItem{
-			selected: false,
-			detail:   i,
+		item := playlist.ListItem{
+			Selected: false,
+			Detail:   i,
 		}
 		m.choices = append(m.choices, item)
 	}
@@ -76,24 +79,38 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg.(type) {
-	case backMsg:
+	case models.BackMsg:
 		m.state = MAIN
 	}
 
+	// handle the update functions for views other then the main menu
 	switch m.state {
 
 	case PLAYLIST:
+		// return a new updated model and a cmd
 		model, newCmd := m.views[PLAYLIST].Update(msg)
-		playlistModel, ok := model.(playlistModel)
+		// assert returned interface into struct
+		playlistModel, ok := model.(playlist.Model)
 		if !ok {
 			panic("could not perfom assertion on playlist model")
 		}
+		// set cmd to the returned cmd
 		cmd = newCmd
+		// update the stored model
 		m.views[PLAYLIST] = playlistModel
 
 	case TRACK:
-		_, newCmd := m.views[TRACK].Update(msg)
+		// return a new updated model and a cmd
+		model, newCmd := m.views[TRACK].Update(msg)
+		// assert returned interface into struct
+		trackModel, ok := model.(track.Model)
+		if !ok {
+			panic("could not perfom assertion on track model")
+		}
+		// set cmd to the returned cmd
 		cmd = newCmd
+		// update the stored model
+		m.views[TRACK] = trackModel
 
 	// if the state is MAIN
 	default:
@@ -132,7 +149,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// The "enter" key and the spacebar (a literal space) toggle
 			// the selected state for the item that the cursor is pointing at.
 			case "enter", " ":
-				m.state = m.choices[m.cursor].detail.(view)
+				m.state = m.choices[m.cursor].Detail.(view)
 			}
 		}
 
@@ -158,12 +175,12 @@ func MainMenu(m mainModel) string {
 
 		// Is this choice selected?
 		checked := " " // not selected
-		if choice.selected {
+		if choice.Selected {
 			checked = "x" // selected!
 		}
 
 		// Render the row
-		choice := choice.detail
+		choice := choice.Detail
 		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
 
 	}
