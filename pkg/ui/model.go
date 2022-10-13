@@ -21,7 +21,7 @@ const (
 )
 
 // MAIN MODEL
-type mainModel struct {
+type Model struct {
 	state   view
 	view    view
 	views   map[view]tea.Model
@@ -31,9 +31,9 @@ type mainModel struct {
 	err     error
 }
 
-func New() mainModel {
+func New() Model {
 	// init main model values
-	m := mainModel{
+	m := Model{
 		state: MAIN,
 		views: map[view]tea.Model{
 			PLAYLIST: playlist.New(),
@@ -53,11 +53,11 @@ func New() mainModel {
 	return m
 }
 
-func (m mainModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m mainModel) View() string {
+func (m Model) View() string {
 	switch m.state {
 
 	case "playlist":
@@ -74,7 +74,7 @@ func (m mainModel) View() string {
 	}
 }
 
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -161,7 +161,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 }
 
-func MainMenu(m mainModel) string {
+func MainMenu(m Model) string {
 	var output string
 
 	// Iterate over our choices and create menu items

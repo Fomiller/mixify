@@ -24,6 +24,10 @@ type ListItem struct {
 	Detail   interface{}
 }
 
+func New() Model {
+	return Model{}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	fmt.Println("combined")
@@ -85,7 +89,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	output = " combined "
+	output = " combined view "
 
 	// The footer
 	output += "\nPress q to quit.\n"
@@ -95,35 +99,3 @@ func (m Model) View() string {
 func (m Model) Init() tea.Cmd {
 	return nil
 }
-
-// func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_3
-
-// 	} else if m.state == PLAYLIST_VIEW_1 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }
-
-// func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_3 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_1
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }

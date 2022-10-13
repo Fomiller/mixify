@@ -18,6 +18,9 @@ type menuModel struct {
 	state   string
 	view    view
 	name    string
+
+	playlist tea.Model
+	track    tea.Model
 }
 
 func newMenuModel() menuModel {

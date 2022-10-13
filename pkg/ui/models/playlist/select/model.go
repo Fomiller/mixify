@@ -24,6 +24,10 @@ type ListItem struct {
 	detail   interface{}
 }
 
+func New() Model {
+	return Model{}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	fmt.Println("playlist select")
 	switch msg := msg.(type) {
@@ -81,7 +85,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	output = " track "
+	output = " select view "
 
 	// The footer
 	output += "\nPress q to quit.\n"

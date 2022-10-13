@@ -1,10 +1,9 @@
 package playlist
 
 import (
-	"fmt"
-
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
+	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -37,7 +36,10 @@ type Model struct {
 
 func New() tea.Model {
 	m := Model{
-		state: PLAYLIST_VIEW_1,
+		state:          PLAYLIST_VIEW_1,
+		combined:       combined.New(),
+		playlistSelect: playlistSelect.New(),
+		track:          track.New(),
 	}
 
 	for _, v := range PlaylistList.list {
@@ -155,73 +157,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) Name() view {
-	return m.view
-}
-
 // Main Model view
 func (m Model) View() string {
 	var output string
 
 	output = lipgloss.JoinHorizontal(0.2, m.playlistSelect.View(), m.track.View(), m.combined.View())
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
-}
-
-func (m Model) view1() string {
-	var output string
-
-	// Iterate over our choices and create menu items
-	for i, choice := range m.choices {
-
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Is this choice selected?
-		checked := " " // not selected
-		if choice.Selected {
-			checked = "x" // selected!
-		}
-
-		// Render the row
-		choice := choice.Detail.(Playlist)
-		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Name())
-
-	}
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
-}
-
-func (m Model) view2() string {
-	var output string
-
-	// Iterate over our choices and create menu items
-	for i, choice := range m.choices {
-
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Is this choice selected?
-		checked := " " // not selected
-		if choice.Selected {
-			checked = "x" // selected!
-		}
-
-		// Render the row
-		choice := choice.Detail.(Playlist)
-		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Name())
-
-	}
 
 	// The footer
 	output += "\nPress q to quit.\n"
@@ -259,35 +199,6 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	return m, cmd
 }
-
-// func (m Model) view3() string {
-// 	var output string
-
-// 	// Iterate over our choices and create menu items
-// 	for i, choice := range m.choices {
-
-// 		// Is the cursor pointing at this choice?
-// 		cursor := " " // no cursor
-// 		if m.cursor == i {
-// 			cursor = ">" // cursor!
-// 		}
-
-// 		// Is this choice selected?
-// 		checked := " " // not selected
-// 		if choice.selected {
-// 			checked = "x" // selected!
-// 		}
-
-// 		// Render the row
-// 		choice := choice.detail.(Playlist)
-// 		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Name())
-
-// 	}
-
-// 	// The footer
-// 	output += "\nPress q to quit.\n"
-// 	return output
-// }
 
 type ListItem struct {
 	Selected bool
