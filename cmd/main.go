@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Fomiller/mixify/pkg/ui"
-	tea "github.com/charmbracelet/bubbletea"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	"gopkg.in/yaml.v2"
 )
 
 const redirectURL = "http://localhost:42069/callback/"
@@ -25,9 +24,63 @@ var (
 			spotifyauth.ScopePlaylistReadPrivate,
 		),
 	)
+	Config config
 )
 
+type config struct {
+	Token        string `yaml:"token"`
+	RefreshToken string `yaml:"refreshToken"`
+}
+
+func init() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	// check if config file exists
+	_, err = os.Stat(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
+	// create config dir and file if it doesnt exist
+	if err != nil {
+		createConfig(homeDir)
+	}
+
+}
+
+func createConfig(homeDir string) {
+	fmt.Println("creating config")
+	// create config dir and parent folders if it doesnt exist
+	err := os.MkdirAll(fmt.Sprintf("%s/.config/mixify", homeDir), 0777)
+	if err != nil {
+		panic(err)
+	}
+
+	// create config file if it doesnt exist
+	_, err = os.Create(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
+	// create cfg path constant
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	// read config file
+	buf, err := os.ReadFile(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
+	// f, err := ioutil.ReadFile(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
+	if err != nil {
+		panic(err)
+	}
+
+	err = yaml.Unmarshal(buf, &Config)
+	fmt.Printf("config: %v\n", Config)
+	fmt.Printf("token: %v\n", Config.Token)
+	fmt.Printf("refresh token: %v\n", Config.RefreshToken)
+
 	// // // http server setup
 	// http.HandleFunc("/callback/", auth.CompleteAuth)
 	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -61,8 +114,8 @@ func main() {
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(ui.New()).Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	// if err := tea.NewProgram(ui.New()).Start(); err != nil {
+	// 	fmt.Println("Error running program:", err)
+	// 	os.Exit(1)
+	// }
 }
