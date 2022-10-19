@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/joho/godotenv v1.4.0
 	github.com/zmb3/spotify/v2 v2.3.0
+	gopkg.in/yaml.v2 v2.2.2
 )
 
 require (

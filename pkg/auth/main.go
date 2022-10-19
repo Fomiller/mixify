@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
@@ -14,7 +13,17 @@ import (
 const redirectURL = "http://localhost:42069/callback/"
 
 var (
-	// Auth spotifyauth.Authenticator
+	Auth  *spotifyauth.Authenticator
+	Ch    = make(chan *spotify.Client)
+	State = "abc123"
+)
+
+func init() {
+	// load env vars
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	Auth = spotifyauth.New(
 		spotifyauth.WithRedirectURL(redirectURL),
 		spotifyauth.WithScopes(
@@ -27,18 +36,6 @@ var (
 			spotifyauth.ScopePlaylistReadPrivate,
 		),
 	)
-
-	Ch    = make(chan *spotify.Client)
-	State = "abc123"
-)
-
-func init() {
-	// load env vars
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	fmt.Println(os.Getenv("SPOTIFY_ID"))
 }
 
 func CompleteAuth(w http.ResponseWriter, r *http.Request) {
