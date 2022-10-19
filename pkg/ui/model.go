@@ -51,8 +51,8 @@ func New() Model {
 		track:    playlist.New(),
 	}
 	items := []list.Item{
-		item{view: "PLAYLIST", title: "PLAYLIST", desc: "create playlists"},
-		item{view: "TRACK", title: "TRACKS", desc: "edit tracks"},
+		item{view: PLAYLIST, title: "PLAYLIST", desc: "create playlists"},
+		item{view: TRACK, title: "TRACKS", desc: "edit tracks"},
 	}
 	m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
 
@@ -144,7 +144,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// The "enter" key and the spacebar (a literal space) toggle
 			// the selected state for the item that the cursor is pointing at.
 			case "enter", " ":
-				m.state = PLAYLIST
+				m.state = m.list.SelectedItem().(item).view
 			}
 		}
 		m.list, cmd = m.list.Update(msg)

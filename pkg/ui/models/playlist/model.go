@@ -20,7 +20,7 @@ const (
 
 type Model struct {
 	state   view
-	focused bool
+	focused view
 	list    list.Model
 	cursor  int
 	status  int
@@ -119,6 +119,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
+	case models.NextMsg:
+
 	case tea.WindowSizeMsg:
 		style := lipgloss.NewStyle()
 		h, v := style.GetFrameSize()
@@ -171,9 +173,38 @@ func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.state == PLAYLIST_VIEW_1 {
 		m.state = PLAYLIST_VIEW_2
+		// focus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = true
+		m.track = t
+
+		// unfocus playlistselect model
+		p, ok := m.playlistSelect.(playlistSelect.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		p.Focused = false
+		m.playlistSelect = p
 
 	} else if m.state == PLAYLIST_VIEW_2 {
 		m.state = PLAYLIST_VIEW_3
+		c, ok := m.combined.(combined.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		c.Focused = true
+		m.combined = c
+
+		// unfocus playlistselect model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = false
+		m.track = t
 
 	} else {
 		return m, cmd
@@ -188,8 +219,38 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.state == PLAYLIST_VIEW_3 {
 		m.state = PLAYLIST_VIEW_2
 
+		// focus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = true
+		m.track = t
+		// unfocus combiined model
+		c, ok := m.combined.(combined.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		c.Focused = false
+		m.combined = c
+
 	} else if m.state == PLAYLIST_VIEW_2 {
 		m.state = PLAYLIST_VIEW_1
+		// focus playlistselect model
+		p, ok := m.playlistSelect.(playlistSelect.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		p.Focused = true
+		m.playlistSelect = p
+
+		// unfocus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = false
+		m.track = t
 
 	} else {
 		return m, cmd

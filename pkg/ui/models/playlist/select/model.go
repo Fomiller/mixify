@@ -8,9 +8,14 @@ import (
 
 type view string
 
+var (
+	Focused   bool = true
+	Unfocused bool = false
+)
+
 type Model struct {
 	state   view
-	focused bool
+	Focused bool
 	list    list.Model
 	cursor  int
 	status  int
@@ -38,12 +43,15 @@ func New() Model {
 		item{title: "Pour over coffee", desc: "It takes forever to make though"},
 		item{title: "VR", desc: "Virtual reality...what is there to say?"},
 	}
-	return Model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
+	return Model{Focused: true, list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+
+	case models.NextMsg:
+		m.Focused = true
 
 	case models.StatusMsg:
 		m.status = int(msg)
@@ -77,9 +85,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return docStyle.Render(m.list.View())
+	switch m.Focused {
+	case true:
+		return focusedStyle.Render(m.list.View())
+	default:
+		return docStyle.Render(m.list.View())
+	}
 }
 
 func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m *Model) MoveToNext() tea.Msg {
 	return nil
 }
