@@ -1,32 +1,17 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
-	"github.com/Fomiller/mixify/pkg/auth"
+	"github.com/Fomiller/mixify/pkg/ui"
+	tea "github.com/charmbracelet/bubbletea"
 	"gopkg.in/yaml.v2"
 )
 
 const redirectURL = "http://localhost:42069/callback/"
 
 var (
-	// client *spotify.Client
-	// Auth = spotifyauth.New(
-	// 	spotifyauth.WithRedirectURL(redirectURL),
-	// 	spotifyauth.WithScopes(
-	// 		spotifyauth.ScopeUserReadCurrentlyPlaying,
-	// 		spotifyauth.ScopeUserReadPlaybackState,
-	// 		spotifyauth.ScopeUserModifyPlaybackState,
-	// 		spotifyauth.ScopeUserLibraryModify,
-	// 		spotifyauth.ScopeUserLibraryRead,
-	// 		spotifyauth.ScopePlaylistModifyPublic,
-	// 		spotifyauth.ScopePlaylistReadPrivate,
-	// 	),
-	// )
 	Config config
 )
 
@@ -35,20 +20,20 @@ type config struct {
 	RefreshToken string `yaml:"refreshToken"`
 }
 
-// func init() {
-// 	fmt.Println(os.Getenv("SPOTIFY_ID"))
-// 	homeDir, err := os.UserHomeDir()
-// 	if err != nil {
-// 		panic(err)
-// 	}
+func init() {
+	fmt.Println(os.Getenv("SPOTIFY_ID"))
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
 
-// 	// check if config file exists
-// 	_, err = os.Stat(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
-// 	// create config dir and file if it doesnt exist
-// 	if err != nil {
-// 		createConfig(homeDir)
-// 	}
-// }
+	// check if config file exists
+	_, err = os.Stat(fmt.Sprintf("%s/.config/mixify/config.yaml", homeDir))
+	// create config dir and file if it doesnt exist
+	if err != nil {
+		createConfig(homeDir)
+	}
+}
 
 func main() {
 	// err := readConfig()
@@ -58,42 +43,61 @@ func main() {
 	// fmt.Println(Config)
 
 	// http server setup
-	http.HandleFunc("/callback/", auth.CompleteAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
-	go http.ListenAndServe(":42069", nil)
+	// http.HandleFunc("/callback/", auth.CompleteAuth)
+	// http.HandleFunc("/refresh/", auth.RefreshAuth)
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	log.Println("Got request for:", r.URL.String())
+	// })
+	// go http.ListenAndServe(":42069", nil)
 
-	url := auth.Auth.AuthURL(auth.State)
-	fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", url)
+	// authUrl := auth.Auth.AuthURL(auth.State)
+	// fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", authUrl)
 
-	client := <-auth.Ch
+	// client := <-auth.Ch
 
-	// // use the client to make calls that require authorization
-	user, err := client.CurrentUser(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // // use the client to make calls that require authorization
+	// user, err := client.CurrentUser(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("You are logged in as:", user.ID)
+	// fmt.Println("You are logged in as:", user.ID)
 
-	// _, playlist, err := client.FeaturedPlaylists()
-	playlist, err := client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // _, playlist, err := client.FeaturedPlaylists()
+	// playlist, err := client.CurrentUsersPlaylists(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	p := playlist.Playlists[0]
-	fmt.Println("Playlist: ", p)
-	fmt.Println("ID: ", p.ID)
+	// p := playlist.Playlists[0]
+	// fmt.Println("Playlist: ", p)
+	// fmt.Println("ID: ", p.ID)
+
+	//refresh token stuff
+	// token := make(map[string]string)
+	// token["refresh_token"] = "AQAtTr7ysrfqsfadY7gHj5wjSKyTN3W7v5CyjAm1w5SQKj2YHQypAzPzlkB2zgPUdM85SDL3_zehxyeIf-nQ9SDEz9olGk89bCoUdBBxUPF5-V4KQsK2HVaz53Vov0GF_Us"
+	// postData, err := json.Marshal(token)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// data := bytes.NewBuffer(postData)
+	// data := url.Values{}
+	// data.Add("refresh_token", "AQAtTr7ysrfqsfadY7gHj5wjSKyTN3W7v5CyjAm1w5SQKj2YHQypAzPzlkB2zgPUdM85SDL3_zehxyeIf")
+	// resp, err := http.PostForm("http://localhost:42069/refresh/", data)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(resp.Body)
+	// /////////////////////////////
 
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	// if err := tea.NewProgram(ui.New()).Start(); err != nil {
-	// 	fmt.Println("Error running program:", err)
-	// 	os.Exit(1)
-	// }
+	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
 }
 
 func createConfig(homeDir string) {

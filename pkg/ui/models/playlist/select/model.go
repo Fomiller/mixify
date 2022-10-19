@@ -1,9 +1,8 @@
 package playlistSelect
 
 import (
-	"fmt"
-
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -12,24 +11,38 @@ type view string
 type Model struct {
 	state   view
 	focused bool
-	choices []ListItem
+	list    list.Model
 	cursor  int
 	status  int
 	err     error
 	name    string
 }
 
-type ListItem struct {
-	selected bool
-	detail   interface{}
+type item struct {
+	title, desc string
 }
 
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.desc }
+func (i item) FilterValue() string { return i.title }
+
 func New() Model {
-	return Model{}
+	items := []list.Item{
+		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
+		item{title: "Nutella", desc: "It's good on toast"},
+		item{title: "Bitter melon", desc: "It cools you down"},
+		item{title: "Nice socks", desc: "And by that I mean socks without holes"},
+		item{title: "Eight hours of sleep", desc: "I had this once"},
+		item{title: "Cats", desc: "Usually"},
+		item{title: "Plantasia, the album", desc: "My plants love it too"},
+		item{title: "Pour over coffee", desc: "It takes forever to make though"},
+		item{title: "VR", desc: "Virtual reality...what is there to say?"},
+	}
+	return Model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	fmt.Println("playlist select")
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 
 	case models.StatusMsg:
@@ -40,9 +53,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
+
 	// Is it a key press?
 	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
 		switch msg.String() {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
@@ -54,76 +70,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "down" and "j" keys move the cursor down
-		// case "right", "l":
-		// 	return m.next(msg)
-
-		// case "left", "h":
-		// 	return m.prev(msg)
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.choices[m.cursor].selected = !m.choices[m.cursor].selected
 		}
 	}
-	return m, nil
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
 }
 
 func (m Model) View() string {
-	var output string
-
-	output = " select view "
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
+	return docStyle.Render(m.list.View())
 }
 
 func (m Model) Init() tea.Cmd {
 	return nil
 }
-
-// func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_1 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_3
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }
-
-// func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_3 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_1
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }

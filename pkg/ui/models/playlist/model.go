@@ -5,6 +5,7 @@ import (
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,12 +18,10 @@ const (
 	PLAYLIST_VIEW_3 view = "VIEW_3"
 )
 
-type backMsg bool
-
 type Model struct {
 	state   view
 	focused bool
-	choices []ListItem
+	list    list.Model
 	cursor  int
 	status  int
 	err     error
@@ -34,6 +33,14 @@ type Model struct {
 	track          tea.Model
 }
 
+type item struct {
+	title, desc string
+}
+
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.desc }
+func (i item) FilterValue() string { return i.title }
+
 func New() tea.Model {
 	m := Model{
 		state:          PLAYLIST_VIEW_1,
@@ -43,11 +50,11 @@ func New() tea.Model {
 	}
 
 	for _, v := range PlaylistList.list {
-		item := ListItem{
-			Selected: false,
-			Detail:   v,
+		items := []list.Item{
+			item{title: "Raspberry Pi’s", desc: v.Name()},
 		}
-		m.choices = append(m.choices, item)
+		// m.list = append(m.list, item)
+		m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
 	}
 
 	return m
@@ -66,7 +73,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return a new updated model and a cmd
 		model, newCmd := m.playlistSelect.Update(msg)
 		// assert returned interface into struct
-		playlistSelectModel, ok := model.(Model)
+		playlistSelectModel, ok := model.(playlistSelect.Model)
 		if !ok {
 			panic("could not perfom assertion on playlist select model")
 		}
@@ -112,6 +119,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
+	case tea.WindowSizeMsg:
+		style := lipgloss.NewStyle()
+		h, v := style.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
+
 	// Is it a key press?
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
@@ -119,24 +131,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
 			return m, func() tea.Msg {
-				return backMsg(true)
+				return models.BackMsg(true)
 			}
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
 			return m, tea.Quit
-
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
 
 		// The "down" and "j" keys move the cursor down
 		case "right", "l":
@@ -145,10 +145,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left", "h":
 			return m.prev(msg)
 
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.choices[m.cursor].Selected = !m.choices[m.cursor].Selected
+			// The "enter" key and the spacebar (a literal space) toggle
+			// the selected state for the item that the cursor is pointing at.
 		}
 	}
 
@@ -161,7 +159,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	output = lipgloss.JoinHorizontal(0.2, m.playlistSelect.View(), m.track.View(), m.combined.View())
+	output = lipgloss.JoinHorizontal(lipgloss.Top, m.playlistSelect.View(), m.track.View(), m.combined.View())
 
 	// The footer
 	output += "\nPress q to quit.\n"

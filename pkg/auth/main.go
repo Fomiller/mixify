@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
@@ -40,6 +42,8 @@ func init() {
 
 func CompleteAuth(w http.ResponseWriter, r *http.Request) {
 	tok, err := Auth.Token(r.Context(), State, r)
+	tokByte, _ := json.Marshal(tok)
+	err = os.WriteFile("./test", tokByte, 0777)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
@@ -53,4 +57,8 @@ func CompleteAuth(w http.ResponseWriter, r *http.Request) {
 	client := spotify.New(Auth.Client(r.Context(), tok))
 	fmt.Fprintf(w, "Login Completed!")
 	Ch <- client
+}
+
+func RefreshAuth(w http.ResponseWriter, r *http.Request) {
+
 }
