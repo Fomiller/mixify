@@ -14,6 +14,7 @@ create menu model that lists all other models, when the model is selected the ma
 [] change playlist nested models to be fancy tea list models
 [] create styles for bubble tea components. spofify colors
 [] build out readme
-[] change menu items to be names of actions "create", "edit", "queue", "combine", "update"
-[] fix vertial scrolling with left and right controls
-[] fix height and width of screen
+[] change menu items to be names of actions "create", "edit", "queue", "combine", "update", "preview" "select"
+[x] fix vertial scrolling with left and right controls
+[x] fix height and width of screen
+[] make height and width of components dynamic
