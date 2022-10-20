@@ -2,6 +2,7 @@ package playlistSelect
 
 import (
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -42,16 +43,48 @@ func New() Model {
 		item{title: "Plantasia, the album", desc: "My plants love it too"},
 		item{title: "Pour over coffee", desc: "It takes forever to make though"},
 		item{title: "VR", desc: "Virtual reality...what is there to say?"},
+		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
+		item{title: "Nutella", desc: "It's good on toast"},
+		item{title: "Bitter melon", desc: "It cools you down"},
+		item{title: "Nice socks", desc: "And by that I mean socks without holes"},
+		item{title: "Eight hours of sleep", desc: "I had this once"},
+		item{title: "Cats", desc: "Usually"},
+		item{title: "Plantasia, the album", desc: "My plants love it too"},
+		item{title: "Pour over coffee", desc: "It takes forever to make though"},
+		item{title: "VR", desc: "Virtual reality...what is there to say?"},
+		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
+		item{title: "Nutella", desc: "It's good on toast"},
+		item{title: "Bitter melon", desc: "It cools you down"},
+		item{title: "Nice socks", desc: "And by that I mean socks without holes"},
+		item{title: "Eight hours of sleep", desc: "I had this once"},
+		item{title: "Cats", desc: "Usually"},
+		item{title: "Plantasia, the album", desc: "My plants love it too"},
+		item{title: "Pour over coffee", desc: "It takes forever to make though"},
+		item{title: "VR", desc: "Virtual reality...what is there to say?"},
+		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
+		item{title: "Nutella", desc: "It's good on toast"},
+		item{title: "Bitter melon", desc: "It cools you down"},
+		item{title: "Nice socks", desc: "And by that I mean socks without holes"},
+		item{title: "Eight hours of sleep", desc: "I had this once"},
+		item{title: "Cats", desc: "Usually"},
+		item{title: "Plantasia, the album", desc: "My plants love it too"},
+		item{title: "Pour over coffee", desc: "It takes forever to make though"},
+		item{title: "VR", desc: "Virtual reality...what is there to say?"},
 	}
-	return Model{Focused: true, list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
+	// TODO make this height and width dynamic for now it works
+	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)
+	playlistList.KeyMap.NextPage = key.NewBinding(
+		key.WithKeys("pgdown", "J"),
+	)
+	playlistList.KeyMap.PrevPage = key.NewBinding(
+		key.WithKeys("pgup", "K"),
+	)
+	return Model{Focused: true, list: playlistList}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-
-	case models.NextMsg:
-		m.Focused = true
 
 	case models.StatusMsg:
 		m.status = int(msg)
@@ -78,7 +111,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
+		case "right", "l":
+			return m, cmd
 		}
+
 	}
 	m.list, cmd = m.list.Update(msg)
 	return m, cmd

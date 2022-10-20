@@ -5,7 +5,6 @@ import (
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -21,7 +20,6 @@ const (
 type Model struct {
 	state   view
 	focused view
-	list    list.Model
 	cursor  int
 	status  int
 	err     error
@@ -47,14 +45,6 @@ func New() tea.Model {
 		combined:       combined.New(),
 		playlistSelect: playlistSelect.New(),
 		track:          track.New(),
-	}
-
-	for _, v := range PlaylistList.list {
-		items := []list.Item{
-			item{title: "Raspberry Pi’s", desc: v.Name()},
-		}
-		// m.list = append(m.list, item)
-		m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
 	}
 
 	return m
@@ -119,13 +109,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
-	case models.NextMsg:
-
-	case tea.WindowSizeMsg:
-		style := lipgloss.NewStyle()
-		h, v := style.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
-
 	// Is it a key press?
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
@@ -163,14 +146,10 @@ func (m Model) View() string {
 
 	output = lipgloss.JoinHorizontal(lipgloss.Top, m.playlistSelect.View(), m.track.View(), m.combined.View())
 
-	// The footer
-	output += "\nPress q to quit.\n"
 	return output
 }
 
 func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	if m.state == PLAYLIST_VIEW_1 {
 		m.state = PLAYLIST_VIEW_2
 		// focus track model
@@ -201,16 +180,16 @@ func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// unfocus playlistselect model
 		t, ok := m.track.(track.Model)
 		if !ok {
-			panic("something went wrong")
+			panic("some went wrong")
 		}
 		t.Focused = false
 		m.track = t
 
 	} else {
-		return m, cmd
+		return m, nil
 	}
 
-	return m, cmd
+	return m, nil
 }
 
 func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
