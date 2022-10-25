@@ -1,6 +1,8 @@
 package playlist
 
 import (
+	"fmt"
+
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
@@ -51,7 +53,8 @@ func New() tea.Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	fmt.Println("SELECT INIT CALLED")
+	return playlistSelect.GetUserPlaylistsCmd
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -61,6 +64,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_1:
 		// return a new updated model and a cmd
+		fmt.Printf("Playlist model %v", msg)
 		model, newCmd := m.playlistSelect.Update(msg)
 		// assert returned interface into struct
 		playlistSelectModel, ok := model.(playlistSelect.Model)

@@ -15,9 +15,10 @@ import (
 const redirectURL = "http://localhost:42069/callback/"
 
 var (
-	Auth  *spotifyauth.Authenticator
-	Ch    = make(chan *spotify.Client)
-	State = "abc123"
+	Auth   *spotifyauth.Authenticator
+	Ch     = make(chan *spotify.Client)
+	State  = "abc123"
+	Client *spotify.Client
 )
 
 func init() {
@@ -41,7 +42,10 @@ func init() {
 }
 
 func CompleteAuth(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println(r)
+	fmt.Println("complete auth")
 	tok, err := Auth.Token(r.Context(), State, r)
+	fmt.Println(tok)
 	tokByte, _ := json.Marshal(tok)
 	err = os.WriteFile("./test", tokByte, 0777)
 	if err != nil {
@@ -55,10 +59,6 @@ func CompleteAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := spotify.New(Auth.Client(r.Context(), tok))
-	fmt.Fprintf(w, "Login Completed!")
+	// fmt.Fprintf(w, "Login Completed!")
 	Ch <- client
-}
-
-func RefreshAuth(w http.ResponseWriter, r *http.Request) {
-
 }

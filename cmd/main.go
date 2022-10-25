@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
-	"github.com/Fomiller/mixify/pkg/ui"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/Fomiller/mixify/pkg/auth"
 	"gopkg.in/yaml.v2"
 )
 
@@ -43,28 +45,76 @@ func main() {
 	// fmt.Println(Config)
 
 	// http server setup
-	// http.HandleFunc("/callback/", auth.CompleteAuth)
+	http.HandleFunc("/callback/", auth.CompleteAuth)
 	// http.HandleFunc("/refresh/", auth.RefreshAuth)
 	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 	// 	log.Println("Got request for:", r.URL.String())
 	// })
-	// go http.ListenAndServe(":42069", nil)
+	go http.ListenAndServe(":42069", nil)
 
-	// authUrl := auth.Auth.AuthURL(auth.State)
-	// fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", authUrl)
+	authUrl := auth.Auth.AuthURL(auth.State)
+	fmt.Println(authUrl)
+	fmt.Println("----------")
 
-	// client := <-auth.Ch
+	fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", authUrl)
+	client := &http.Client{}
+	res, err := client.Get(authUrl)
+	if err != nil {
+		panic("error logging in to spotify")
+	}
+	// fmt.Println()
+	fmt.Println("----------")
+	fmt.Println(res)
+	fmt.Println("----------")
+	fmt.Println(res.Request.URL.String())
+	fmt.Println("----------")
+	fmt.Println(res.Cookies())
+
+	res, err = client.Get(res.Request.URL.String())
+	if err != nil {
+		panic("error logging in to spotify")
+	}
+	fmt.Println("----------")
+	fmt.Println("----------")
+	fmt.Println(res)
+	fmt.Println("----------")
+	fmt.Println(res.Request.URL.String())
+	fmt.Println("----------")
+	fmt.Println(res.Cookies())
+	// fmt.Println(res.Location())
+	x, err := client.Get(res.Request.URL.String())
+	if err != nil {
+		panic("error logging in to spotify")
+	}
+	fmt.Println("----------")
+	fmt.Println("----------")
+	fmt.Println(x)
+	fmt.Println("----------")
+	fmt.Println(x.Request.URL.String())
+	// fmt.Println("----------")
+	// fmt.Println(x.Cookies())
+
+	// callbackUrl := res.Cookies()
+	// fmt.Println(callbackUrl)
+	// fmt.Println(callbackUrl.Path)
+	res, err = http.Get("localhost:42069/callback/")
+	if err != nil {
+		panic("error logging calling callback")
+	}
+	fmt.Println(res)
+
+	auth.Client = <-auth.Ch
 
 	// // // use the client to make calls that require authorization
-	// user, err := client.CurrentUser(context.Background())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	user, err := auth.Client.CurrentUser(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("You are logged in as:", user.ID)
+	fmt.Println("You are logged in as:", user.ID)
 
 	// // _, playlist, err := client.FeaturedPlaylists()
-	// playlist, err := client.CurrentUsersPlaylists(context.Background())
+	// playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
@@ -94,10 +144,10 @@ func main() {
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	// if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+	// 	fmt.Println("Error running program:", err)
+	// 	os.Exit(1)
+	// }
 }
 
 func createConfig(homeDir string) {
