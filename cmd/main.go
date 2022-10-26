@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/Fomiller/mixify/pkg/auth"
+	"github.com/pkg/browser"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,61 +50,23 @@ func main() {
 	// http server setup
 	http.HandleFunc("/callback/", auth.CompleteAuth)
 	// http.HandleFunc("/refresh/", auth.RefreshAuth)
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	log.Println("Got request for:", r.URL.String())
-	// })
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Got request for:", r.URL.String())
+	})
+
 	go http.ListenAndServe(":42069", nil)
-
 	authUrl := auth.Auth.AuthURL(auth.State)
-	fmt.Println(authUrl)
-	fmt.Println("----------")
 
-	fmt.Printf("Please log in to Spotify by visiting the following page in your browser: %s\n", authUrl)
-	client := &http.Client{}
-	res, err := client.Get(authUrl)
-	if err != nil {
-		panic("error logging in to spotify")
+	c := askForConfirmation("Do you want to login?")
+	if c != false {
+		err := browser.OpenURL(authUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("unable to login to spotify")
+		os.Exit(1)
 	}
-	// fmt.Println()
-	fmt.Println("----------")
-	fmt.Println(res)
-	fmt.Println("----------")
-	fmt.Println(res.Request.URL.String())
-	fmt.Println("----------")
-	fmt.Println(res.Cookies())
-
-	res, err = client.Get(res.Request.URL.String())
-	if err != nil {
-		panic("error logging in to spotify")
-	}
-	fmt.Println("----------")
-	fmt.Println("----------")
-	fmt.Println(res)
-	fmt.Println("----------")
-	fmt.Println(res.Request.URL.String())
-	fmt.Println("----------")
-	fmt.Println(res.Cookies())
-	// fmt.Println(res.Location())
-	x, err := client.Get(res.Request.URL.String())
-	if err != nil {
-		panic("error logging in to spotify")
-	}
-	fmt.Println("----------")
-	fmt.Println("----------")
-	fmt.Println(x)
-	fmt.Println("----------")
-	fmt.Println(x.Request.URL.String())
-	// fmt.Println("----------")
-	// fmt.Println(x.Cookies())
-
-	// callbackUrl := res.Cookies()
-	// fmt.Println(callbackUrl)
-	// fmt.Println(callbackUrl.Path)
-	res, err = http.Get("localhost:42069/callback/")
-	if err != nil {
-		panic("error logging calling callback")
-	}
-	fmt.Println(res)
 
 	auth.Client = <-auth.Ch
 
@@ -180,4 +145,28 @@ func readConfig() error {
 	}
 
 	return nil
+}
+func askForConfirmation(s string) bool {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [Y/n]: ", s)
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "" {
+			response = "y"
+
+		}
+
+		if response == "y" || response == "yes" {
+			return true
+		} else if response == "n" || response == "no" {
+			return false
+		}
+	}
 }
