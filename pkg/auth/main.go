@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/oauth2"
 )
 
 const redirectURL = "http://localhost:42069/callback/"
@@ -19,6 +20,7 @@ var (
 	Ch     = make(chan *spotify.Client)
 	State  = "abc123"
 	Client *spotify.Client
+	Token  *oauth2.Token
 )
 
 func init() {
@@ -42,9 +44,15 @@ func init() {
 }
 
 func CompleteAuth(w http.ResponseWriter, r *http.Request) {
-	tok, err := Auth.Token(r.Context(), State, r)
-	tokByte, _ := json.Marshal(tok)
-	err = os.WriteFile("./token.json", tokByte, 0777)
+	Token, err := Auth.Token(r.Context(), State, r)
+	tokByte, _ := json.MarshalIndent(Token, "", "\t")
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile(fmt.Sprintf("%s/.config/mixify/credentials.json", homeDir), tokByte, 0777)
+
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
@@ -55,7 +63,7 @@ func CompleteAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// use the token to get an authenticated client
-	client := spotify.New(Auth.Client(r.Context(), tok))
+	client := spotify.New(Auth.Client(r.Context(), Token))
 	fmt.Fprintf(w, "Login Completed!")
 	Ch <- client
 }

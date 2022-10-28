@@ -64,7 +64,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_1:
 		// return a new updated model and a cmd
-		fmt.Printf("Playlist model %v", msg)
 		model, newCmd := m.playlistSelect.Update(msg)
 		// assert returned interface into struct
 		playlistSelectModel, ok := model.(playlistSelect.Model)

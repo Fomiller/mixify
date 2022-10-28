@@ -2,7 +2,6 @@ package playlistSelect
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/Fomiller/mixify/pkg/auth"
@@ -40,20 +39,14 @@ func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 
 func New() Model {
-	items := []list.Item{
-		item{title: "Cats", desc: "Usually"},
-		item{title: "Plantasia, the album", desc: "My plants love it too"},
-		item{title: "Pour over coffee", desc: "It takes forever to make though"},
-		item{title: "VR", desc: "Virtual reality...what is there to say?"},
-		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
-		item{title: "Nutella", desc: "It's good on toast"},
-		item{title: "Bitter melon", desc: "It cools you down"},
-		item{title: "Nice socks", desc: "And by that I mean socks without holes"},
-		item{title: "Eight hours of sleep", desc: "I had this once"},
-		item{title: "Cats", desc: "Usually"},
-		item{title: "Plantasia, the album", desc: "My plants love it too"},
-		item{title: "Pour over coffee", desc: "It takes forever to make though"},
-		item{title: "VR", desc: "Virtual reality...what is there to say?"},
+	var items []list.Item
+	spotifyUserPlaylists, err := auth.Client.CurrentUsersPlaylists(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, p := range spotifyUserPlaylists.Playlists {
+		items = append(items, item{title: p.Name, desc: p.Description})
 	}
 	// TODO make this height and width dynamic for now it works
 	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)
@@ -63,16 +56,12 @@ func New() Model {
 	playlistList.KeyMap.PrevPage = key.NewBinding(
 		key.WithKeys("pgup", "K"),
 	)
-	playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	return Model{Focused: true, list: playlistList, Plist: playlist}
+
+	return Model{Focused: true, list: playlistList}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	fmt.Println(msg)
 	switch msg := msg.(type) {
 
 	case models.StatusMsg:
@@ -110,7 +99,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	fmt.Println(m.Plist.Playlists)
 	switch m.Focused {
 	case true:
 		return focusedStyle.Render(m.list.View())
