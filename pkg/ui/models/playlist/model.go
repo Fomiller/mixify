@@ -7,8 +7,10 @@ import (
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/zmb3/spotify/v2"
 )
 
 type view string
@@ -34,7 +36,9 @@ type Model struct {
 }
 
 type item struct {
-	title, desc string
+	title string
+	desc  string
+	ID    spotify.ID
 }
 
 func (i item) Title() string       { return i.title }
@@ -133,8 +137,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left", "h":
 			return m.prev(msg)
 
-			// The "enter" key and the spacebar (a literal space) toggle
-			// the selected state for the item that the cursor is pointing at.
+		case "enter", " ":
+			selectModel, _ := m.playlistSelect.(playlistSelect.Model)
+			i := selectModel.List.SelectedItem().(playlistSelect.Item)
+			trackModel := m.track.(track.Model)
+			items := append(trackModel.List.Items(), i)
+			trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+			m.track = trackModel
+			return m, nil
 		}
 	}
 

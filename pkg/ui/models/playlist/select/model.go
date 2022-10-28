@@ -22,7 +22,7 @@ var (
 type Model struct {
 	state   view
 	Focused bool
-	list    list.Model
+	List    list.Model
 	Plist   *spotify.SimplePlaylistPage
 	cursor  int
 	status  int
@@ -30,13 +30,15 @@ type Model struct {
 	name    string
 }
 
-type item struct {
-	title, desc string
+type Item struct {
+	title string
+	desc  string
+	ID    spotify.ID
 }
 
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
 	var items []list.Item
@@ -46,7 +48,7 @@ func New() Model {
 	}
 
 	for _, p := range spotifyUserPlaylists.Playlists {
-		items = append(items, item{title: p.Name, desc: p.Description})
+		items = append(items, Item{title: p.Name, desc: p.Description})
 	}
 	// TODO make this height and width dynamic for now it works
 	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)
@@ -57,7 +59,7 @@ func New() Model {
 		key.WithKeys("pgup", "K"),
 	)
 
-	return Model{Focused: true, list: playlistList}
+	return Model{Focused: true, List: playlistList}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -74,7 +76,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+		m.List.SetSize(msg.Width-h, msg.Height-v)
 
 	// Is it a key press?
 	case tea.KeyMsg:
@@ -91,19 +93,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "right", "l":
 			return m, cmd
-		}
 
+		}
 	}
-	m.list, cmd = m.list.Update(msg)
+	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
 
 func (m Model) View() string {
 	switch m.Focused {
 	case true:
-		return focusedStyle.Render(m.list.View())
+		return focusedStyle.Render(m.List.View())
 	default:
-		return docStyle.Render(m.list.View())
+		return docStyle.Render(m.List.View())
 	}
 }
 
