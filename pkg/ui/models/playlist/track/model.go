@@ -20,15 +20,15 @@ type Model struct {
 	Name    string
 }
 
-type item struct {
+type Item struct {
 	title string
 	desc  string
 	ID    spotify.ID
 }
 
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
 	items := []list.Item{}

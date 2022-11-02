@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,8 +10,6 @@ import (
 	"strings"
 
 	"github.com/Fomiller/mixify/pkg/auth"
-	"github.com/Fomiller/mixify/pkg/ui"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
 )
 
@@ -70,22 +69,38 @@ func main() {
 	auth.Client = <-auth.Ch
 
 	// // // use the client to make calls that require authorization
-	// user, err := auth.Client.CurrentUser(context.Background())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	user, err := auth.Client.CurrentUser(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("You are logged in as:", user.ID)
+	fmt.Println("You are logged in as:", user.ID)
 
 	// // _, playlist, err := client.FeaturedPlaylists()
-	// playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// p := playlist.Playlists[0]
-	// fmt.Println("Playlist: ", p)
-	// fmt.Println("ID: ", p.ID)
+	p := playlist.Playlists[0]
+	fmt.Println("Playlist: ", p)
+	fmt.Println("ID: ", p.ID)
+	// fmt.Println("Tracks: ", p.Tracks)
+	// fmt.Println("Tracks Endpoint: ", p.Tracks)
+
+	tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), p.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// fmt.Printf("trackList: %v\n", tracklist)
+	// fmt.Printf("trackList.Tracks: %v\n", tracklist.Tracks)
+	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.SimpleTrack)
+	fmt.Println("--------------------------")
+	// for _, t := range tracklist.Tracks {
+	// 	fmt.Println(t)
+	// 	fmt.Println(t.Track)
+	// 	fmt.Println("--------------------------")
+	// }
 
 	//refresh token stuff
 	// token := make(map[string]string)
@@ -108,10 +123,10 @@ func main() {
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	// if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+	// 	fmt.Println("Error running program:", err)
+	// 	os.Exit(1)
+	// }
 }
 
 func login(s string) bool {

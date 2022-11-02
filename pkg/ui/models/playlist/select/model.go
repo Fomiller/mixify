@@ -42,6 +42,7 @@ func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
 	var items []list.Item
+
 	spotifyUserPlaylists, err := auth.Client.CurrentUsersPlaylists(context.Background())
 	if err != nil {
 		log.Fatal(err)

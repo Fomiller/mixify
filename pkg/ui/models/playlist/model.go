@@ -138,13 +138,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.prev(msg)
 
 		case "enter", " ":
-			selectModel, _ := m.playlistSelect.(playlistSelect.Model)
-			i := selectModel.List.SelectedItem().(playlistSelect.Item)
-			trackModel := m.track.(track.Model)
-			items := append(trackModel.List.Items(), i)
-			trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
-			m.track = trackModel
-			return m, nil
+			switch m.state {
+			case PLAYLIST_VIEW_1:
+				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
+				i := selectModel.List.SelectedItem().(playlistSelect.Item)
+				trackModel := m.track.(track.Model)
+				items := append(trackModel.List.Items(), i)
+				trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+				m.track = trackModel
+				return m, nil
+			case PLAYLIST_VIEW_2:
+				trackModel, _ := m.track.(track.Model)
+				i := trackModel.List.SelectedItem().(track.Item)
+				combinedModel := m.combined.(combined.Model)
+				items := append(combinedModel.List.Items(), i)
+				combinedModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+				m.combined = combinedModel
+				return m, nil
+
+			}
 		}
 	}
 
