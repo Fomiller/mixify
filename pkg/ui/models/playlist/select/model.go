@@ -20,20 +20,21 @@ var (
 )
 
 type Model struct {
-	state   view
-	Focused bool
-	List    list.Model
-	Plist   *spotify.SimplePlaylistPage
-	cursor  int
-	status  int
-	err     error
-	name    string
+	state        view
+	Focused      bool
+	List         list.Model
+	PlaylistList spotify.SimplePlaylist
+	cursor       int
+	status       int
+	err          error
+	name         string
 }
 
 type Item struct {
-	title string
-	desc  string
-	ID    spotify.ID
+	title    string
+	desc     string
+	ID       spotify.ID
+	Playlist spotify.SimplePlaylist
 }
 
 func (i Item) Title() string       { return i.title }
@@ -49,7 +50,7 @@ func New() Model {
 	}
 
 	for _, p := range spotifyUserPlaylists.Playlists {
-		items = append(items, Item{title: p.Name, desc: p.Description})
+		items = append(items, Item{title: p.Name, desc: p.Description, Playlist: p})
 	}
 	// TODO make this height and width dynamic for now it works
 	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)

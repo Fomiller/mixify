@@ -21,13 +21,12 @@ const (
 
 // MAIN MODEL
 type Model struct {
-	state   view
-	view    view
-	list    list.Model
-	choices []playlist.ListItem
-	cursor  int // which item our cursor is pointing at, This could be pulled into a nested model?
-	status  int
-	err     error
+	state  view
+	view   view
+	list   list.Model
+	cursor int // which item our cursor is pointing at, This could be pulled into a nested model?
+	status int
+	err    error
 
 	playlist tea.Model
 	track    tea.Model

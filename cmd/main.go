@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/Fomiller/mixify/pkg/auth"
+	"github.com/Fomiller/mixify/pkg/ui"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
 )
 
@@ -94,7 +96,8 @@ func main() {
 	}
 	// fmt.Printf("trackList: %v\n", tracklist)
 	// fmt.Printf("trackList.Tracks: %v\n", tracklist.Tracks)
-	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.SimpleTrack)
+	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Name)
+	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Album.Name)
 	fmt.Println("--------------------------")
 	// for _, t := range tracklist.Tracks {
 	// 	fmt.Println(t)
@@ -123,10 +126,10 @@ func main() {
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	// if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
-	// 	fmt.Println("Error running program:", err)
-	// 	os.Exit(1)
-	// }
+	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
 }
 
 func login(s string) bool {

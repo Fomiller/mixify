@@ -1,6 +1,10 @@
 package track
 
 import (
+	"context"
+	"log"
+
+	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -11,13 +15,14 @@ import (
 type view string
 
 type Model struct {
-	state   view
-	Focused bool
-	List    list.Model
-	cursor  int
-	status  int
-	err     error
-	Name    string
+	state        view
+	Focused      bool
+	List         list.Model
+	PlaylistList []*spotify.SimplePlaylist
+	cursor       int
+	status       int
+	err          error
+	Name         string
 }
 
 type Item struct {
@@ -89,4 +94,33 @@ func (m Model) View() string {
 
 func (m Model) Init() tea.Cmd {
 	return nil
+}
+
+func (m *Model) PopulateTracks() {
+	var tracks []spotify.PlaylistTrack
+	var items []list.Item
+	// get all tracks in each list
+	for _, p := range m.PlaylistList {
+		tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), p.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// combine all tracks into one list
+		for _, t := range tracklist.Tracks {
+			tracks = append(tracks, t)
+		}
+	}
+	// create items out of master track list
+	for _, t := range tracks {
+		items = append(items, Item{title: t.Track.Name, desc: t.Track.Album.Name, ID: t.Track.ID})
+	}
+	trackList := list.New(items, list.NewDefaultDelegate(), 60, 50)
+	trackList.KeyMap.NextPage = key.NewBinding(
+		key.WithKeys("pgdown", "J"),
+	)
+	trackList.KeyMap.PrevPage = key.NewBinding(
+		key.WithKeys("pgup", "K"),
+	)
+	m.List = trackList
 }

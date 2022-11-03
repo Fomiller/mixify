@@ -7,7 +7,6 @@ import (
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
@@ -80,6 +79,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.playlistSelect = playlistSelectModel
 
 	case PLAYLIST_VIEW_2:
+		fmt.Print("here")
 		// return a new updated model and a cmd
 		model, newCmd := m.track.Update(msg)
 		// assert returned interface into struct
@@ -142,19 +142,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case PLAYLIST_VIEW_1:
 				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
 				i := selectModel.List.SelectedItem().(playlistSelect.Item)
+
 				trackModel := m.track.(track.Model)
-				items := append(trackModel.List.Items(), i)
-				trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+				playlists := append(trackModel.PlaylistList, &i.Playlist)
+				trackModel.PlaylistList = playlists
+				// items := append(trackModel.List.Items(), i)
+				trackModel.PopulateTracks()
+				// trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
 				m.track = trackModel
 				return m, nil
-			case PLAYLIST_VIEW_2:
-				trackModel, _ := m.track.(track.Model)
-				i := trackModel.List.SelectedItem().(track.Item)
-				combinedModel := m.combined.(combined.Model)
-				items := append(combinedModel.List.Items(), i)
-				combinedModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
-				m.combined = combinedModel
-				return m, nil
+
+				// case PLAYLIST_VIEW_2:
+				// trackModel, _ := m.track.(track.Model)
+				// i := trackModel.List.SelectedItem().(track.Item)
+				// fmt.Print(i)
+				// combinedModel := m.combined.(combined.Model)
+				// items := append(combinedModel.List.Items(), i)
+				// combinedModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+				// m.combined = combinedModel
+				// return m, nil
 
 			}
 		}
@@ -261,73 +267,4 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
-}
-
-type ListItem struct {
-	Selected bool
-	Detail   interface{}
-}
-
-type Playlist struct {
-	name        string
-	description string
-	tracks      []string
-}
-
-func (p Playlist) Name() string        { return p.name }
-func (p Playlist) Description() string { return p.description }
-func (p Playlist) Tracks() []string    { return p.tracks }
-
-// type track struct {
-// 	name string
-// }
-
-type Playlists struct {
-	list []Playlist
-}
-
-type detail interface {
-	Name() string
-}
-
-type playlistDetail interface {
-	detail
-	Description() string
-	Tracks() []string
-}
-
-type trackDetail interface {
-	Name() string
-}
-
-// func (d detail) FilterValue() string { return d.name }
-
-var PlaylistList = Playlists{
-	list: []Playlist{
-		{
-			name:        "playlist_01",
-			description: "raggae music",
-			tracks:      []string{"raggae 1", "raggae 2", "raggae 3", "raggae 4", "raggae 5", "raggae 6", "raggae 7", "raggae 8", "raggae 9", "raggae 10"},
-		},
-		{
-			name:        "playlist_02",
-			description: "chill music",
-			tracks:      []string{"chill 1", "chill 2", "chill 3", "chill 4", "chill 5", "chill 6", "chill 7", "chill 8", "chill 9", "chill 10"},
-		},
-		{
-			name:        "playlist_03",
-			description: "rap music",
-			tracks:      []string{"rap 1", "rap 2", "rap 3", "rap 4", "rap 5", "rap 6", "rap 7", "rap 8", "rap 9", "rap 10"},
-		},
-		{
-			name:        "playlist_04",
-			description: "EDM music",
-			tracks:      []string{"EDM 1", "EDM 2", "EDM 3", "EDM 4", "EDM 5", "EDM 6", "EDM 7", "EDM 8", "EDM 9", "EDM 10"},
-		},
-		{
-			name:        "playlist_05",
-			description: "classical music",
-			tracks:      []string{"classical 1", "classical 2", "classical 3", "classical 4", "classical 5", "classical 6", "classical 7", "classical 8", "classical 9", "classical 10"},
-		},
-	},
 }
