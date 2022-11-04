@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type view string
@@ -20,7 +21,8 @@ type Model struct {
 }
 
 type Item struct {
-	title, desc string
+	title string
+	desc  string
 }
 
 func (i Item) Title() string       { return i.title }
@@ -29,7 +31,10 @@ func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
 	items := []list.Item{}
-	combinedList := list.New(items, list.NewDefaultDelegate(), 60, 50)
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
+	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
+	combinedList := list.New(items, delegate, 60, 50)
 	combinedList.KeyMap.NextPage = key.NewBinding(
 		key.WithKeys("pgdown", "J"),
 	)

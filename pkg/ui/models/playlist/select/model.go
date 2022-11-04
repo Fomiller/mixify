@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	emoji "github.com/tmdvs/Go-Emoji-Utils"
 	"github.com/zmb3/spotify/v2"
 )
@@ -36,9 +37,20 @@ type Item struct {
 	desc     string
 	ID       spotify.ID
 	Playlist spotify.SimplePlaylist
+	Selected bool
 }
 
-func (i Item) Title() string       { return i.title }
+func (i *Item) ToggleSelected() {
+	i.Selected = !i.Selected
+}
+
+func (i Item) Title() string {
+	if i.Selected == true {
+		return selectedItemStyle.Render(i.title)
+	} else {
+		return i.title
+	}
+}
 func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
@@ -54,12 +66,16 @@ func New() Model {
 		item := Item{
 			title:    emoji.RemoveAll(p.Name),
 			desc:     p.Description,
+			Selected: false,
 			Playlist: p,
 		}
 		items = append(items, item)
 	}
 	// TODO make this height and width dynamic for now it works
-	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
+	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
+	playlistList := list.New(items, delegate, 60, 50)
 	playlistList.KeyMap.NextPage = key.NewBinding(
 		key.WithKeys("pgdown", "J"),
 	)

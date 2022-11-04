@@ -141,13 +141,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case PLAYLIST_VIEW_1:
 				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
 				i := selectModel.List.SelectedItem().(playlistSelect.Item)
-
+				c := selectModel.List.Cursor()
+				i.ToggleSelected()
+				selectModel.List.SetItem(c, i)
 				trackModel := m.track.(track.Model)
 				playlists := append(trackModel.PlaylistList, &i.Playlist)
 				trackModel.PlaylistList = playlists
 				// items := append(trackModel.List.Items(), i)
 				trackModel.PopulateTracks()
 				// trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
+				m.playlistSelect = selectModel
 				m.track = trackModel
 				return m, nil
 

@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
 )
 
@@ -26,18 +27,29 @@ type Model struct {
 }
 
 type Item struct {
-	title string
-	desc  string
-	ID    spotify.ID
+	title    string
+	desc     string
+	ID       spotify.ID
+	Selected bool
 }
 
-func (i Item) Title() string       { return i.title }
+func (i Item) Title() string {
+	if i.Selected == true {
+		return selectedItemStyle.Render(i.title)
+	} else {
+		return i.title
+	}
+}
 func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
 	items := []list.Item{}
-	trackList := list.New(items, list.NewDefaultDelegate(), 60, 50)
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
+	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#3FB925", Dark: "#3FB925"})
+
+	trackList := list.New(items, delegate, 60, 50)
 	trackList.KeyMap.NextPage = key.NewBinding(
 		key.WithKeys("pgdown", "J"),
 	)
