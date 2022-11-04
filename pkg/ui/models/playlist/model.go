@@ -79,7 +79,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.playlistSelect = playlistSelectModel
 
 	case PLAYLIST_VIEW_2:
-		fmt.Print("here")
 		// return a new updated model and a cmd
 		model, newCmd := m.track.Update(msg)
 		// assert returned interface into struct

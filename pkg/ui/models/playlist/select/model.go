@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	emoji "github.com/tmdvs/Go-Emoji-Utils"
 	"github.com/zmb3/spotify/v2"
 )
 
@@ -50,7 +51,12 @@ func New() Model {
 	}
 
 	for _, p := range spotifyUserPlaylists.Playlists {
-		items = append(items, Item{title: p.Name, desc: p.Description, Playlist: p})
+		item := Item{
+			title:    emoji.RemoveAll(p.Name),
+			desc:     p.Description,
+			Playlist: p,
+		}
+		items = append(items, item)
 	}
 	// TODO make this height and width dynamic for now it works
 	playlistList := list.New(items, list.NewDefaultDelegate(), 60, 50)

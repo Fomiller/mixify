@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -70,35 +69,35 @@ func main() {
 
 	auth.Client = <-auth.Ch
 
-	// // // use the client to make calls that require authorization
-	user, err := auth.Client.CurrentUser(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // // // use the client to make calls that require authorization
+	// user, err := auth.Client.CurrentUser(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("You are logged in as:", user.ID)
+	// fmt.Println("You are logged in as:", user.ID)
 
-	// // _, playlist, err := client.FeaturedPlaylists()
-	playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// // // _, playlist, err := client.FeaturedPlaylists()
+	// playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	p := playlist.Playlists[0]
-	fmt.Println("Playlist: ", p)
-	fmt.Println("ID: ", p.ID)
-	// fmt.Println("Tracks: ", p.Tracks)
-	// fmt.Println("Tracks Endpoint: ", p.Tracks)
+	// p := playlist.Playlists[0]
+	// fmt.Println("Playlist: ", p)
+	// fmt.Println("ID: ", p.ID)
+	// // fmt.Println("Tracks: ", p.Tracks)
+	// // fmt.Println("Tracks Endpoint: ", p.Tracks)
 
-	tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), p.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), p.ID)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 	// fmt.Printf("trackList: %v\n", tracklist)
 	// fmt.Printf("trackList.Tracks: %v\n", tracklist.Tracks)
-	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Name)
-	fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Album.Name)
-	fmt.Println("--------------------------")
+	// fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Name)
+	// fmt.Printf("trackList.Tracks[0]: %v\n", tracklist.Tracks[0].Track.Album.Name)
+	// fmt.Println("--------------------------")
 	// for _, t := range tracklist.Tracks {
 	// 	fmt.Println(t)
 	// 	fmt.Println(t.Track)

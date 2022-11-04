@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/joho/godotenv v1.4.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
+	github.com/tmdvs/Go-Emoji-Utils v1.1.0
 	github.com/zmb3/spotify/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1
 )
