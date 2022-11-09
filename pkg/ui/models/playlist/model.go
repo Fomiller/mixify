@@ -1,8 +1,6 @@
 package playlist
 
 import (
-	"fmt"
-
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
@@ -12,13 +10,13 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-type view string
-
 const (
 	PLAYLIST_VIEW_1 view = "VIEW_1"
 	PLAYLIST_VIEW_2 view = "VIEW_2"
 	PLAYLIST_VIEW_3 view = "VIEW_3"
 )
+
+type view string
 
 type Model struct {
 	state   view
@@ -56,7 +54,6 @@ func New() tea.Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	fmt.Println("SELECT INIT CALLED")
 	return playlistSelect.GetUserPlaylistsCmd
 }
 
@@ -140,19 +137,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.state {
 			case PLAYLIST_VIEW_1:
 				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
-				i := selectModel.List.SelectedItem().(playlistSelect.Item)
-				c := selectModel.List.Cursor()
-				i.ToggleSelected()
-				selectModel.List.SetItem(c, i)
 				trackModel := m.track.(track.Model)
-				playlists := append(trackModel.PlaylistList, &i.Playlist)
-				trackModel.PlaylistList = playlists
-				// items := append(trackModel.List.Items(), i)
-				trackModel.PopulateTracks()
-				// trackModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
-				m.playlistSelect = selectModel
-				m.track = trackModel
-				return m, nil
+
+				item := selectModel.List.SelectedItem().(playlistSelect.Item)
+				cursor := selectModel.List.Cursor()
+
+				if item.Selected == false {
+					item.ToggleSelected()
+					selectModel.List.SetItem(cursor, item)
+					trackModel = trackModel.InsertTracks(item.Playlist)
+					m.playlistSelect = selectModel
+					m.track = trackModel
+					return m, nil
+
+				} else {
+					item.ToggleSelected()
+					selectModel.List.SetItem(cursor, item)
+					trackModel = trackModel.RemoveTracks(item.Playlist.ID)
+					m.playlistSelect = selectModel
+					m.track = trackModel
+					return m, nil
+				}
 
 				// case PLAYLIST_VIEW_2:
 				// trackModel, _ := m.track.(track.Model)

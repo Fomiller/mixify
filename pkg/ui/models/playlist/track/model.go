@@ -2,7 +2,7 @@ package track
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
@@ -27,21 +27,22 @@ type Model struct {
 }
 
 type Item struct {
-	title    string
-	desc     string
-	ID       spotify.ID
-	Selected bool
+	ItemTitle  string
+	Desc       string
+	TrackID    spotify.ID
+	PlaylistID spotify.ID
+	Selected   bool
 }
 
 func (i Item) Title() string {
 	if i.Selected == true {
-		return selectedItemStyle.Render(i.title)
+		return selectedItemStyle.Render(i.ItemTitle)
 	} else {
-		return i.title
+		return i.ItemTitle
 	}
 }
-func (i Item) Description() string { return i.desc }
-func (i Item) FilterValue() string { return i.title }
+func (i Item) Description() string { return i.Desc }
+func (i Item) FilterValue() string { return i.ItemTitle }
 
 func New() Model {
 	items := []list.Item{}
@@ -108,31 +109,34 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) PopulateTracks() {
-	var tracks []spotify.PlaylistTrack
-	var items []list.Item
-	// get all tracks in each list
-	for _, p := range m.PlaylistList {
-		tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), p.ID)
-		if err != nil {
-			log.Fatal(err)
-		}
+// this needs to be optimized
+func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
+	tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), playlist.ID)
+	if err != nil {
+		panic(err)
+	}
+	for _, t := range tracklist.Tracks {
+		m.List.InsertItem(len(m.List.Items())+1, Item{
+			ItemTitle:  t.Track.Name,
+			Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
+			TrackID:    t.Track.ID,
+			PlaylistID: playlist.ID,
+		})
+	}
+	return m
+}
 
-		// combine all tracks into one list
-		for _, t := range tracklist.Tracks {
-			tracks = append(tracks, t)
+func (m Model) RemoveTracks(playlistID spotify.ID) Model {
+	newList := []list.Item{}
+	for _, t := range m.List.Items() {
+		track, ok := t.(Item)
+		if !ok {
+			panic("could not assert list.Item to type Item")
+		}
+		if track.PlaylistID != playlistID {
+			newList = append(newList, track)
 		}
 	}
-	// create items out of master track list
-	for _, t := range tracks {
-		items = append(items, Item{title: t.Track.Name, desc: t.Track.Album.Name, ID: t.Track.ID})
-	}
-	trackList := list.New(items, list.NewDefaultDelegate(), 60, 50)
-	trackList.KeyMap.NextPage = key.NewBinding(
-		key.WithKeys("pgdown", "J"),
-	)
-	trackList.KeyMap.PrevPage = key.NewBinding(
-		key.WithKeys("pgup", "K"),
-	)
-	m.List = trackList
+	m.List.SetItems(newList)
+	return m
 }
