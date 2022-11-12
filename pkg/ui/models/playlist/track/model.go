@@ -44,6 +44,10 @@ func (i Item) Title() string {
 func (i Item) Description() string { return i.Desc }
 func (i Item) FilterValue() string { return i.ItemTitle }
 
+func (i *Item) ToggleSelected() {
+	i.Selected = !i.Selected
+}
+
 func New() Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
@@ -121,6 +125,7 @@ func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
 			Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
 			TrackID:    t.Track.ID,
 			PlaylistID: playlist.ID,
+			Selected:   true,
 		})
 	}
 	return m
@@ -139,4 +144,19 @@ func (m Model) RemoveTracks(playlistID spotify.ID) Model {
 	}
 	m.List.SetItems(newList)
 	return m
+}
+
+func (m Model) GetSelectedTracks() []list.Item {
+	selected := []list.Item{}
+	for _, t := range m.List.Items() {
+		track, ok := t.(Item)
+		if !ok {
+			panic("could not assert list.Item to type Item")
+		}
+		if track.Selected != false {
+			selected = append(selected, track)
+		}
+	}
+	m.List.SetItems(selected)
+	return m.List.Items()
 }

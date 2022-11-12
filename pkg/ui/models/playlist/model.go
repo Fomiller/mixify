@@ -1,6 +1,8 @@
 package playlist
 
 import (
+	"fmt"
+
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
@@ -159,16 +161,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				// case PLAYLIST_VIEW_2:
-				// trackModel, _ := m.track.(track.Model)
-				// i := trackModel.List.SelectedItem().(track.Item)
-				// fmt.Print(i)
-				// combinedModel := m.combined.(combined.Model)
-				// items := append(combinedModel.List.Items(), i)
-				// combinedModel.List = list.New(items, list.NewDefaultDelegate(), 0, 0)
-				// m.combined = combinedModel
-				// return m, nil
+			case PLAYLIST_VIEW_2:
+				trackModel := m.track.(track.Model)
+				item := trackModel.List.SelectedItem().(track.Item)
+				cursor := trackModel.List.Cursor()
+				fmt.Printf("%v:%v", item, cursor)
 
+				// if item.Selected == false {
+				item.ToggleSelected()
+				trackModel.List.SetItem(cursor, item)
+				combinedModel := m.combined.(combined.Model)
+				selectedTracks := trackModel.GetSelectedTracks()
+				combinedModel.List.SetItems(selectedTracks)
+				m.track = trackModel
+				m.combined = combinedModel
+				return m, nil
+
+				// } else {
+				// 	item.ToggleSelected()
+				// 	trackModel.List.SetItem(cursor, item)
+				// 	trackModel = trackModel.RemoveTracks(item.Playlist.ID)
+				// 	m.playlistSelect = trackModel
+				// 	m.track = trackModel
+				// 	return m, nil
+				// }
 			}
 		}
 	}
