@@ -2,6 +2,7 @@ package playlist
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
@@ -140,31 +141,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case PLAYLIST_VIEW_1:
 				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
 				trackModel := m.track.(track.Model)
+				combinedModel := m.combined.(combined.Model)
 
 				item := selectModel.List.SelectedItem().(playlistSelect.Item)
-				cursor := selectModel.List.Cursor()
+				cursor := selectModel.List.Index()
 
 				if item.Selected == false {
 					item.ToggleSelected()
 					selectModel.List.SetItem(cursor, item)
 					trackModel = trackModel.InsertTracks(item.Playlist)
+					selectedTracks := trackModel.GetSelectedTracks()
+					combinedModel.List.SetItems(selectedTracks)
+
 					m.playlistSelect = selectModel
 					m.track = trackModel
+					m.combined = combinedModel
 					return m, nil
 
 				} else {
 					item.ToggleSelected()
 					selectModel.List.SetItem(cursor, item)
 					trackModel = trackModel.RemoveTracks(item.Playlist.ID)
+					selectedTracks := trackModel.GetSelectedTracks()
+					combinedModel.List.SetItems(selectedTracks)
+
 					m.playlistSelect = selectModel
 					m.track = trackModel
+					m.combined = combinedModel
 					return m, nil
 				}
 
 			case PLAYLIST_VIEW_2:
 				trackModel := m.track.(track.Model)
 				item := trackModel.List.SelectedItem().(track.Item)
-				cursor := trackModel.List.Cursor()
+				cursor := trackModel.List.Index()
 				fmt.Printf("%v:%v", item, cursor)
 
 				// if item.Selected == false {
@@ -177,14 +187,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.combined = combinedModel
 				return m, nil
 
-				// } else {
-				// 	item.ToggleSelected()
-				// 	trackModel.List.SetItem(cursor, item)
-				// 	trackModel = trackModel.RemoveTracks(item.Playlist.ID)
-				// 	m.playlistSelect = trackModel
-				// 	m.track = trackModel
-				// 	return m, nil
-				// }
+			case PLAYLIST_VIEW_3:
+				combinedModel := m.combined.(combined.Model)
+				err := combinedModel.CreatePlaylist()
+				if err != nil {
+					log.Fatal(err)
+				}
+
 			}
 		}
 	}

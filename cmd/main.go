@@ -12,12 +12,14 @@ import (
 	"github.com/Fomiller/mixify/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
+	"github.com/zmb3/spotify/v2"
 )
 
 const redirectURL = "http://localhost:42069/callback/"
 
 var (
 	AuthUrl string = auth.Auth.AuthURL(auth.State)
+	User    *spotify.PrivateUser
 )
 
 type config struct {
@@ -69,8 +71,8 @@ func main() {
 
 	auth.Client = <-auth.Ch
 
-	// // // // use the client to make calls that require authorization
-	// user, err := auth.Client.CurrentUser(context.Background())
+	// // // use the client to make calls that require authorization
+	// User, err := auth.Client.CurrentUser(context.Background())
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }

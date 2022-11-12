@@ -1,11 +1,17 @@
 package combined
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/zmb3/spotify/v2"
 )
 
 type view string
@@ -21,8 +27,10 @@ type Model struct {
 }
 
 type Item struct {
-	title string
-	desc  string
+	title      string
+	desc       string
+	TrackID    spotify.ID
+	PlaylistID spotify.ID
 }
 
 func (i Item) Title() string       { return i.title }
@@ -89,5 +97,29 @@ func (m Model) View() string {
 }
 
 func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m Model) CreatePlaylist() error {
+	user, err := auth.Client.CurrentUser(context.Background())
+	if err != nil {
+		return err
+	}
+	newPlaylist, err := auth.Client.CreatePlaylistForUser(context.Background(), user.ID, "my-test-playlist", "created with mixify", true, false)
+	if err != nil {
+		return err
+	}
+	var trackIDs []spotify.ID
+	tracks := m.List.Items()
+	for _, t := range tracks {
+		x := t.(track.Item)
+		trackIDs = append(trackIDs, x.TrackID)
+	}
+	snapShotID, err := auth.Client.AddTracksToPlaylist(context.Background(), newPlaylist.ID, trackIDs...)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Successfully created new playlist %v", snapShotID)
 	return nil
 }
