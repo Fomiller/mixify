@@ -1,15 +1,17 @@
 package playlist
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/zmb3/spotify/v2"
 )
-
-type view string
 
 const (
 	PLAYLIST_VIEW_1 view = "VIEW_1"
@@ -17,12 +19,11 @@ const (
 	PLAYLIST_VIEW_3 view = "VIEW_3"
 )
 
-type backMsg bool
+type view string
 
 type Model struct {
 	state   view
-	focused bool
-	choices []ListItem
+	focused view
 	cursor  int
 	status  int
 	err     error
@@ -34,6 +35,16 @@ type Model struct {
 	track          tea.Model
 }
 
+type item struct {
+	title string
+	desc  string
+	ID    spotify.ID
+}
+
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.desc }
+func (i item) FilterValue() string { return i.title }
+
 func New() tea.Model {
 	m := Model{
 		state:          PLAYLIST_VIEW_1,
@@ -42,19 +53,11 @@ func New() tea.Model {
 		track:          track.New(),
 	}
 
-	for _, v := range PlaylistList.list {
-		item := ListItem{
-			Selected: false,
-			Detail:   v,
-		}
-		m.choices = append(m.choices, item)
-	}
-
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return playlistSelect.GetUserPlaylistsCmd
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -66,7 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return a new updated model and a cmd
 		model, newCmd := m.playlistSelect.Update(msg)
 		// assert returned interface into struct
-		playlistSelectModel, ok := model.(Model)
+		playlistSelectModel, ok := model.(playlistSelect.Model)
 		if !ok {
 			panic("could not perfom assertion on playlist select model")
 		}
@@ -119,24 +122,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
 			return m, func() tea.Msg {
-				return backMsg(true)
+				return models.BackMsg(true)
 			}
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
 			return m, tea.Quit
-
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
 
 		// The "down" and "j" keys move the cursor down
 		case "right", "l":
@@ -145,10 +136,65 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left", "h":
 			return m.prev(msg)
 
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
 		case "enter", " ":
-			m.choices[m.cursor].Selected = !m.choices[m.cursor].Selected
+			switch m.state {
+			case PLAYLIST_VIEW_1:
+				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
+				trackModel := m.track.(track.Model)
+				combinedModel := m.combined.(combined.Model)
+
+				item := selectModel.List.SelectedItem().(playlistSelect.Item)
+				cursor := selectModel.List.Index()
+
+				if item.Selected == false {
+					item.ToggleSelected()
+					selectModel.List.SetItem(cursor, item)
+					trackModel = trackModel.InsertTracks(item.Playlist)
+					selectedTracks := trackModel.GetSelectedTracks()
+					combinedModel.List.SetItems(selectedTracks)
+
+					m.playlistSelect = selectModel
+					m.track = trackModel
+					m.combined = combinedModel
+					return m, nil
+
+				} else {
+					item.ToggleSelected()
+					selectModel.List.SetItem(cursor, item)
+					trackModel = trackModel.RemoveTracks(item.Playlist.ID)
+					selectedTracks := trackModel.GetSelectedTracks()
+					combinedModel.List.SetItems(selectedTracks)
+
+					m.playlistSelect = selectModel
+					m.track = trackModel
+					m.combined = combinedModel
+					return m, nil
+				}
+
+			case PLAYLIST_VIEW_2:
+				trackModel := m.track.(track.Model)
+				item := trackModel.List.SelectedItem().(track.Item)
+				cursor := trackModel.List.Index()
+				fmt.Printf("%v:%v", item, cursor)
+
+				// if item.Selected == false {
+				item.ToggleSelected()
+				trackModel.List.SetItem(cursor, item)
+				combinedModel := m.combined.(combined.Model)
+				selectedTracks := trackModel.GetSelectedTracks()
+				combinedModel.List.SetItems(selectedTracks)
+				m.track = trackModel
+				m.combined = combinedModel
+				return m, nil
+
+			case PLAYLIST_VIEW_3:
+				combinedModel := m.combined.(combined.Model)
+				err := combinedModel.CreatePlaylist()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+			}
 		}
 	}
 
@@ -161,27 +207,52 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	output = lipgloss.JoinHorizontal(0.2, m.playlistSelect.View(), m.track.View(), m.combined.View())
+	output = lipgloss.JoinHorizontal(lipgloss.Top, m.playlistSelect.View(), m.track.View(), m.combined.View())
 
-	// The footer
-	output += "\nPress q to quit.\n"
 	return output
 }
 
 func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	if m.state == PLAYLIST_VIEW_1 {
 		m.state = PLAYLIST_VIEW_2
+		// focus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = true
+		m.track = t
+
+		// unfocus playlistselect model
+		p, ok := m.playlistSelect.(playlistSelect.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		p.Focused = false
+		m.playlistSelect = p
 
 	} else if m.state == PLAYLIST_VIEW_2 {
 		m.state = PLAYLIST_VIEW_3
+		c, ok := m.combined.(combined.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		c.Focused = true
+		m.combined = c
+
+		// unfocus playlistselect model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("some went wrong")
+		}
+		t.Focused = false
+		m.track = t
 
 	} else {
-		return m, cmd
+		return m, nil
 	}
 
-	return m, cmd
+	return m, nil
 }
 
 func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -190,81 +261,42 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.state == PLAYLIST_VIEW_3 {
 		m.state = PLAYLIST_VIEW_2
 
+		// focus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = true
+		m.track = t
+		// unfocus combiined model
+		c, ok := m.combined.(combined.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		c.Focused = false
+		m.combined = c
+
 	} else if m.state == PLAYLIST_VIEW_2 {
 		m.state = PLAYLIST_VIEW_1
+		// focus playlistselect model
+		p, ok := m.playlistSelect.(playlistSelect.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		p.Focused = true
+		m.playlistSelect = p
+
+		// unfocus track model
+		t, ok := m.track.(track.Model)
+		if !ok {
+			panic("something went wrong")
+		}
+		t.Focused = false
+		m.track = t
 
 	} else {
 		return m, cmd
 	}
 
 	return m, cmd
-}
-
-type ListItem struct {
-	Selected bool
-	Detail   interface{}
-}
-
-type Playlist struct {
-	name        string
-	description string
-	tracks      []string
-}
-
-func (p Playlist) Name() string        { return p.name }
-func (p Playlist) Description() string { return p.description }
-func (p Playlist) Tracks() []string    { return p.tracks }
-
-// type track struct {
-// 	name string
-// }
-
-type Playlists struct {
-	list []Playlist
-}
-
-type detail interface {
-	Name() string
-}
-
-type playlistDetail interface {
-	detail
-	Description() string
-	Tracks() []string
-}
-
-type trackDetail interface {
-	Name() string
-}
-
-// func (d detail) FilterValue() string { return d.name }
-
-var PlaylistList = Playlists{
-	list: []Playlist{
-		{
-			name:        "playlist_01",
-			description: "raggae music",
-			tracks:      []string{"raggae 1", "raggae 2", "raggae 3", "raggae 4", "raggae 5", "raggae 6", "raggae 7", "raggae 8", "raggae 9", "raggae 10"},
-		},
-		{
-			name:        "playlist_02",
-			description: "chill music",
-			tracks:      []string{"chill 1", "chill 2", "chill 3", "chill 4", "chill 5", "chill 6", "chill 7", "chill 8", "chill 9", "chill 10"},
-		},
-		{
-			name:        "playlist_03",
-			description: "rap music",
-			tracks:      []string{"rap 1", "rap 2", "rap 3", "rap 4", "rap 5", "rap 6", "rap 7", "rap 8", "rap 9", "rap 10"},
-		},
-		{
-			name:        "playlist_04",
-			description: "EDM music",
-			tracks:      []string{"EDM 1", "EDM 2", "EDM 3", "EDM 4", "EDM 5", "EDM 6", "EDM 7", "EDM 8", "EDM 9", "EDM 10"},
-		},
-		{
-			name:        "playlist_05",
-			description: "classical music",
-			tracks:      []string{"classical 1", "classical 2", "classical 3", "classical 4", "classical 5", "classical 6", "classical 7", "classical 8", "classical 9", "classical 10"},
-		},
-	},
 }

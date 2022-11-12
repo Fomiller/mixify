@@ -1,35 +1,93 @@
 package playlistSelect
 
 import (
-	"fmt"
+	"context"
+	"log"
 
+	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	emoji "github.com/tmdvs/Go-Emoji-Utils"
+	"github.com/zmb3/spotify/v2"
 )
 
 type view string
 
+var (
+	Focused   bool = true
+	Unfocused bool = false
+)
+
 type Model struct {
-	state   view
-	focused bool
-	choices []ListItem
-	cursor  int
-	status  int
-	err     error
-	name    string
+	state        view
+	Focused      bool
+	List         list.Model
+	PlaylistList spotify.SimplePlaylist
+	cursor       int
+	status       int
+	err          error
+	name         string
 }
 
-type ListItem struct {
-	selected bool
-	detail   interface{}
+type Item struct {
+	title    string
+	desc     string
+	ID       spotify.ID
+	Playlist spotify.SimplePlaylist
+	Selected bool
 }
+
+func (i *Item) ToggleSelected() {
+	i.Selected = !i.Selected
+}
+
+func (i Item) Title() string {
+	if i.Selected == true {
+		return selectedItemStyle.Render(i.title)
+	} else {
+		return i.title
+	}
+}
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
 
 func New() Model {
-	return Model{}
+	var items []list.Item
+
+	spotifyUserPlaylists, err := auth.Client.CurrentUsersPlaylists(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, p := range spotifyUserPlaylists.Playlists {
+		item := Item{
+			title:    emoji.RemoveAll(p.Name),
+			desc:     p.Description,
+			Selected: false,
+			Playlist: p,
+		}
+		items = append(items, item)
+	}
+	// TODO make this height and width dynamic for now it works
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
+	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
+	playlistList := list.New(items, delegate, 60, 50)
+	playlistList.KeyMap.NextPage = key.NewBinding(
+		key.WithKeys("pgdown", "J"),
+	)
+	playlistList.KeyMap.PrevPage = key.NewBinding(
+		key.WithKeys("pgup", "K"),
+	)
+
+	return Model{Focused: true, List: playlistList}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	fmt.Println("playlist select")
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 
 	case models.StatusMsg:
@@ -40,9 +98,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.List.SetSize(msg.Width-h, msg.Height-v)
+
 	// Is it a key press?
 	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
 		switch msg.String() {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
@@ -54,76 +115,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+		case "right", "l":
+			return m, cmd
 
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "down" and "j" keys move the cursor down
-		// case "right", "l":
-		// 	return m.next(msg)
-
-		// case "left", "h":
-		// 	return m.prev(msg)
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.choices[m.cursor].selected = !m.choices[m.cursor].selected
 		}
 	}
-	return m, nil
+	m.List, cmd = m.List.Update(msg)
+	return m, cmd
 }
 
 func (m Model) View() string {
-	var output string
-
-	output = " select view "
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
+	switch m.Focused {
+	case true:
+		return focusedStyle.Render(m.List.View())
+	default:
+		return docStyle.Render(m.List.View())
+	}
 }
 
 func (m Model) Init() tea.Cmd {
+	// fmt.Println("SELECT INIT CALLED")
+	// return GetUserPlaylistsCmd
 	return nil
 }
 
-// func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_1 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_3
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }
-
-// func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	var cmd tea.Cmd
-
-// 	if m.state == PLAYLIST_VIEW_3 {
-// 		m.state = PLAYLIST_VIEW_2
-
-// 	} else if m.state == PLAYLIST_VIEW_2 {
-// 		m.state = PLAYLIST_VIEW_1
-
-// 	} else {
-// 		return m, cmd
-// 	}
-
-// 	return m, cmd
-// }
+func (m *Model) MoveToNext() tea.Msg {
+	return nil
+}

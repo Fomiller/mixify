@@ -1,36 +1,59 @@
 package combined
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/zmb3/spotify/v2"
 )
 
 type view string
 
 type Model struct {
 	state   view
-	focused bool
-	choices []ListItem
+	Focused bool
+	List    list.Model
 	cursor  int
 	status  int
 	err     error
 	name    string
 }
 
-type ListItem struct {
-	Selected bool
-	Detail   interface{}
+type Item struct {
+	title      string
+	desc       string
+	TrackID    spotify.ID
+	PlaylistID spotify.ID
 }
 
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
+
 func New() Model {
-	return Model{}
+	items := []list.Item{}
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
+	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
+	combinedList := list.New(items, delegate, 60, 50)
+	combinedList.KeyMap.NextPage = key.NewBinding(
+		key.WithKeys("pgdown", "J"),
+	)
+	combinedList.KeyMap.PrevPage = key.NewBinding(
+		key.WithKeys("pgup", "K"),
+	)
+	return Model{Focused: false, List: combinedList}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	fmt.Println("combined")
 	switch msg := msg.(type) {
 
 	case models.StatusMsg:
@@ -41,9 +64,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.List.SetSize(msg.Width-h, msg.Height-v)
+
 	// Is it a key press?
 	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
 		switch msg.String() {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
@@ -55,47 +81,45 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "down" and "j" keys move the cursor down
-		// case "right", "l":
-		// return m.next(msg)
-
-		// case "left", "h":
-		// return m.prev(msg)
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			m.choices[m.cursor].Selected = !m.choices[m.cursor].Selected
 		}
 	}
-
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
+	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
 
 func (m Model) View() string {
-	var output string
-
-	output = " combined view "
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
+	switch m.Focused {
+	case true:
+		return focusedStyle.Render(m.List.View())
+	default:
+		return docStyle.Render(m.List.View())
+	}
 }
 
 func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m Model) CreatePlaylist() error {
+	user, err := auth.Client.CurrentUser(context.Background())
+	if err != nil {
+		return err
+	}
+	newPlaylist, err := auth.Client.CreatePlaylistForUser(context.Background(), user.ID, "my-test-playlist", "created with mixify", true, false)
+	if err != nil {
+		return err
+	}
+	var trackIDs []spotify.ID
+	tracks := m.List.Items()
+	for _, t := range tracks {
+		x := t.(track.Item)
+		trackIDs = append(trackIDs, x.TrackID)
+	}
+	snapShotID, err := auth.Client.AddTracksToPlaylist(context.Background(), newPlaylist.ID, trackIDs...)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Successfully created new playlist %v", snapShotID)
 	return nil
 }

@@ -1,11 +1,10 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,33 +21,39 @@ const (
 
 // MAIN MODEL
 type Model struct {
-	state   view
-	view    view
-	views   map[view]tea.Model
-	choices []playlist.ListItem // items on the to-do list
-	cursor  int                 // which to-do list item our cursor is pointing at, This could be pulled into a nested model?
-	status  int
-	err     error
+	state  view
+	view   view
+	list   list.Model
+	cursor int // which item our cursor is pointing at, This could be pulled into a nested model?
+	status int
+	err    error
+
+	playlist tea.Model
+	track    tea.Model
 }
+
+type item struct {
+	title, desc string
+	model       tea.Model
+	view        view
+}
+
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.desc }
+func (i item) FilterValue() string { return i.title }
 
 func New() Model {
 	// init main model values
 	m := Model{
-		state: MAIN,
-		views: map[view]tea.Model{
-			PLAYLIST: playlist.New(),
-			TRACK:    track.New(),
-		},
+		state:    MAIN,
+		playlist: playlist.New(),
+		track:    playlist.New(),
 	}
-
-	// init choices
-	for i := range m.views {
-		item := playlist.ListItem{
-			Selected: false,
-			Detail:   i,
-		}
-		m.choices = append(m.choices, item)
+	items := []list.Item{
+		item{view: PLAYLIST, title: "PLAYLIST", desc: "create playlists"},
+		item{view: TRACK, title: "TRACKS", desc: "edit tracks"},
 	}
+	m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
 
 	return m
 }
@@ -61,16 +66,13 @@ func (m Model) View() string {
 	switch m.state {
 
 	case "playlist":
-		return m.views[PLAYLIST].View()
+		return m.playlist.View()
 
 	case "track":
-		return m.views[TRACK].View()
-
-	case "test":
-		return m.views[TEST].View()
+		return m.track.View()
 
 	default:
-		return MainMenu(m)
+		return MainMenuView(m)
 	}
 }
 
@@ -88,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case PLAYLIST:
 		// return a new updated model and a cmd
-		model, newCmd := m.views[PLAYLIST].Update(msg)
+		model, newCmd := m.playlist.Update(msg)
 		// assert returned interface into struct
 		playlistModel, ok := model.(playlist.Model)
 		if !ok {
@@ -97,11 +99,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// set cmd to the returned cmd
 		cmd = newCmd
 		// update the stored model
-		m.views[PLAYLIST] = playlistModel
+		m.playlist = playlistModel
 
 	case TRACK:
 		// return a new updated model and a cmd
-		model, newCmd := m.views[TRACK].Update(msg)
+		model, newCmd := m.track.Update(msg)
 		// assert returned interface into struct
 		trackModel, ok := model.(track.Model)
 		if !ok {
@@ -110,7 +112,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// set cmd to the returned cmd
 		cmd = newCmd
 		// update the stored model
-		m.views[TRACK] = trackModel
+		m.playlist = trackModel
 
 	// if the state is MAIN
 	default:
@@ -123,6 +125,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg
 			return m, tea.Quit
 
+		case tea.WindowSizeMsg:
+			h, v := docStyle.GetFrameSize()
+			m.list.SetSize(msg.Width-h, msg.Height-v)
+
 		// Is it a key press?
 		case tea.KeyMsg:
 			switch msg.String() {
@@ -134,24 +140,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 
-			// The "up" and "k" keys move the cursor up
-			case "up", "k":
-				if m.cursor > 0 {
-					m.cursor--
-				}
-
-			// The "down" and "j" keys move the cursor down
-			case "down", "j":
-				if m.cursor < len(m.choices)-1 {
-					m.cursor++
-				}
-
 			// The "enter" key and the spacebar (a literal space) toggle
 			// the selected state for the item that the cursor is pointing at.
 			case "enter", " ":
-				m.state = m.choices[m.cursor].Detail.(view)
+				m.state = m.list.SelectedItem().(item).view
 			}
 		}
+		m.list, cmd = m.list.Update(msg)
 
 	}
 	// Return the updated model to the Bubble Tea runtime for processing.
@@ -161,31 +156,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 }
 
-func MainMenu(m Model) string {
-	var output string
-
-	// Iterate over our choices and create menu items
-	for i, choice := range m.choices {
-
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Is this choice selected?
-		checked := " " // not selected
-		if choice.Selected {
-			checked = "x" // selected!
-		}
-
-		// Render the row
-		choice := choice.Detail
-		output += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
-
-	}
-
-	// The footer
-	output += "\nPress q to quit.\n"
-	return output
+func MainMenuView(m Model) string {
+	return docStyle.Render(m.list.View())
 }

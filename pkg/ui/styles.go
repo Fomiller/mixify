@@ -30,4 +30,6 @@ var (
 	statusMessageStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
 				Render
+
+	docStyle = lipgloss.NewStyle().Margin(1, 2).Border(lipgloss.RoundedBorder())
 )

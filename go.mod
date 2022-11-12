@@ -7,8 +7,10 @@ require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/joho/godotenv v1.4.0
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
+	github.com/tmdvs/Go-Emoji-Utils v1.1.0
 	github.com/zmb3/spotify/v2 v2.3.0
-	gopkg.in/yaml.v2 v2.2.2
+	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1
 )
 
 require (
@@ -26,7 +28,6 @@ require (
 	github.com/sahilm/fuzzy v0.1.0 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
-	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
