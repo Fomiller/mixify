@@ -1,11 +1,11 @@
 package playlist
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist/confirm"
 	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +17,7 @@ const (
 	PLAYLIST_VIEW_1 view = "VIEW_1"
 	PLAYLIST_VIEW_2 view = "VIEW_2"
 	PLAYLIST_VIEW_3 view = "VIEW_3"
+	PLAYLIST_VIEW_4 view = "VIEW_4"
 )
 
 type view string
@@ -33,6 +34,7 @@ type Model struct {
 	combined       tea.Model
 	playlistSelect tea.Model
 	track          tea.Model
+	confirm        tea.Model
 }
 
 type item struct {
@@ -51,6 +53,7 @@ func New() tea.Model {
 		combined:       combined.New(),
 		playlistSelect: playlistSelect.New(),
 		track:          track.New(),
+		confirm:        confirm.InitialModel(),
 	}
 
 	return m
@@ -103,9 +106,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = newCmd
 		// update the stored model
 		m.combined = combinedPlaylistModel
+
+	case PLAYLIST_VIEW_4:
+		// return a new updated model and a cmd
+		model, newCmd := m.confirm.Update(msg)
+		// assert returned interface into struct
+		confirmModel, ok := model.(confirm.Model)
+		if !ok {
+			panic("could not perfom assertion on confirm input model")
+		}
+		// set cmd to the returned cmd
+		cmd = newCmd
+		// update the stored model
+		m.confirm = confirmModel
 	}
 
 	switch msg := msg.(type) {
+
+	case models.CreatePlaylistMsg:
+		promptModel := m.confirm.(confirm.Model)
+		combinedModel := m.combined.(combined.Model)
+		name := promptModel.Inputs[0].Value()
+		desc := promptModel.Inputs[1].Value()
+		err := combinedModel.CreatePlaylist(name, desc)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m = New().(Model)
+		return m, nil
+
+	case models.ResetStateMsg:
+		m.state = PLAYLIST_VIEW_1
+		return m, nil
 
 	case models.StatusMsg:
 		m.status = int(msg)
@@ -121,11 +153,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
-			return m, func() tea.Msg {
-				return models.BackMsg(true)
+			switch m.state {
+			case PLAYLIST_VIEW_4:
+			// override backspace to allow for text input
+			default:
+				return m, func() tea.Msg {
+					return models.BackMsg(true)
+				}
 			}
 
 		// These keys should exit the program.
+		case "esc":
+			switch m.state {
+			case PLAYLIST_VIEW_4:
+				m.state = PLAYLIST_VIEW_3
+			}
+			return m, nil
+
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
@@ -175,7 +219,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				trackModel := m.track.(track.Model)
 				item := trackModel.List.SelectedItem().(track.Item)
 				cursor := trackModel.List.Index()
-				fmt.Printf("%v:%v", item, cursor)
 
 				// if item.Selected == false {
 				item.ToggleSelected()
@@ -188,12 +231,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case PLAYLIST_VIEW_3:
-				combinedModel := m.combined.(combined.Model)
-				err := combinedModel.CreatePlaylist()
-				if err != nil {
-					log.Fatal(err)
-				}
-
+				m.state = PLAYLIST_VIEW_4
+				return m, nil
 			}
 		}
 	}
@@ -207,7 +246,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	output = lipgloss.JoinHorizontal(lipgloss.Top, m.playlistSelect.View(), m.track.View(), m.combined.View())
+	if m.state == PLAYLIST_VIEW_4 {
+		output = m.confirm.View()
+	} else {
+		output = lipgloss.JoinHorizontal(lipgloss.Center, m.playlistSelect.View(), m.track.View(), m.combined.View())
+	}
 
 	return output
 }

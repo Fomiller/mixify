@@ -54,7 +54,7 @@ func (i Item) Title() string {
 func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
-func New() Model {
+func UpdateUserPlaylists() list.Model {
 	var items []list.Item
 
 	spotifyUserPlaylists, err := auth.Client.CurrentUsersPlaylists(context.Background())
@@ -82,8 +82,12 @@ func New() Model {
 	playlistList.KeyMap.PrevPage = key.NewBinding(
 		key.WithKeys("pgup", "K"),
 	)
+	return playlistList
+}
 
-	return Model{Focused: true, List: playlistList}
+func New() Model {
+	list := UpdateUserPlaylists()
+	return Model{Focused: true, List: list}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -134,8 +138,6 @@ func (m Model) View() string {
 }
 
 func (m Model) Init() tea.Cmd {
-	// fmt.Println("SELECT INIT CALLED")
-	// return GetUserPlaylistsCmd
 	return nil
 }
 
