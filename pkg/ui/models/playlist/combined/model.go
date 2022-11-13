@@ -2,10 +2,10 @@ package combined
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/pkg/ui/models/playlist/confirm"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -17,6 +17,7 @@ import (
 type view string
 
 type Model struct {
+	Confirm bool
 	state   view
 	Focused bool
 	List    list.Model
@@ -88,6 +89,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	if m.Confirm == true {
+		cm := confirm.InitialModel()
+		return docStyle.Render(cm.View())
+	}
 	switch m.Focused {
 	case true:
 		return focusedStyle.Render(m.List.View())
@@ -100,12 +105,15 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) CreatePlaylist() error {
+func (m Model) CreatePlaylist(name string, desc string) error {
 	user, err := auth.Client.CurrentUser(context.Background())
 	if err != nil {
 		return err
 	}
-	newPlaylist, err := auth.Client.CreatePlaylistForUser(context.Background(), user.ID, "my-test-playlist", "created with mixify", true, false)
+	if desc == "" {
+		desc = "Created with mixify"
+	}
+	newPlaylist, err := auth.Client.CreatePlaylistForUser(context.Background(), user.ID, name, desc, true, false)
 	if err != nil {
 		return err
 	}
@@ -115,11 +123,40 @@ func (m Model) CreatePlaylist() error {
 		x := t.(track.Item)
 		trackIDs = append(trackIDs, x.TrackID)
 	}
-	snapShotID, err := auth.Client.AddTracksToPlaylist(context.Background(), newPlaylist.ID, trackIDs...)
-	if err != nil {
-		return err
+	// make multiple calls to add tracks if needed, spotify only supports 100 at a time
+	if len(trackIDs) > 100 {
+		tracks := chunkIDs(trackIDs, 100)
+		for _, t := range tracks {
+			_, err := auth.Client.AddTracksToPlaylist(context.Background(), newPlaylist.ID, t...)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		_, err := auth.Client.AddTracksToPlaylist(context.Background(), newPlaylist.ID, trackIDs...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func chunkIDs(slice []spotify.ID, chunkSize int) [][]spotify.ID {
+	var chunks [][]spotify.ID
+	for {
+		if len(slice) == 0 {
+			break
+		}
+
+		// necessary check to avoid slicing beyond
+		// slice capacity
+		if len(slice) < chunkSize {
+			chunkSize = len(slice)
+		}
+
+		chunks = append(chunks, slice[0:chunkSize])
+		slice = slice[chunkSize:]
 	}
 
-	fmt.Printf("Successfully created new playlist %v", snapShotID)
-	return nil
+	return chunks
 }

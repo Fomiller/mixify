@@ -115,19 +115,33 @@ func (m Model) Init() tea.Cmd {
 
 // this needs to be optimized
 func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
-	tracklist, err := auth.Client.GetPlaylistTracks(context.Background(), playlist.ID)
-	if err != nil {
-		panic(err)
+	// limit := 100
+	offset := 0
+	for {
+		result, err := auth.Client.GetPlaylistTracks(context.Background(), playlist.ID, spotify.Offset(offset))
+		if err != nil {
+			panic(err)
+		}
+
+		for _, t := range result.Tracks {
+			m.List.InsertItem(len(m.List.Items())+1, Item{
+				ItemTitle:  t.Track.Name,
+				Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
+				TrackID:    t.Track.ID,
+				PlaylistID: playlist.ID,
+				Selected:   true,
+			})
+		}
+
+		if result.Next != "" {
+			offset = offset + len(result.Tracks)
+			continue
+		} else {
+			break
+		}
+
 	}
-	for _, t := range tracklist.Tracks {
-		m.List.InsertItem(len(m.List.Items())+1, Item{
-			ItemTitle:  t.Track.Name,
-			Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
-			TrackID:    t.Track.ID,
-			PlaylistID: playlist.ID,
-			Selected:   true,
-		})
-	}
+
 	return m
 }
 
