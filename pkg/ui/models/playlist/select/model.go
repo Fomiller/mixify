@@ -103,8 +103,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.List.SetSize(msg.Width-h, msg.Height-v)
+		// h, v := docStyle.GetFrameSize()
+		// m.List.SetSize(msg.Width-h, msg.Height-v)
 
 	// Is it a key press?
 	case tea.KeyMsg:

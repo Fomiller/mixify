@@ -35,6 +35,8 @@ type Model struct {
 	playlistSelect tea.Model
 	track          tea.Model
 	confirm        tea.Model
+
+	ready bool
 }
 
 type item struct {
@@ -54,6 +56,7 @@ func New() tea.Model {
 		playlistSelect: playlistSelect.New(),
 		track:          track.New(),
 		confirm:        confirm.InitialModel(),
+		ready:          false,
 	}
 
 	return m
@@ -122,6 +125,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.setModelSize(msg, h, v)
 
 	case models.CreatePlaylistMsg:
 		promptModel := m.confirm.(confirm.Model)
@@ -342,4 +348,29 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+func (m *Model) setModelSize(msg tea.WindowSizeMsg, h int, v int) {
+	divisor := 3
+	combinedModel := m.combined.(combined.Model)
+	trackModel := m.track.(track.Model)
+	selectModel := m.playlistSelect.(playlistSelect.Model)
+
+	log.Print(msg)
+	log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
+	log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
+	log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
+	log.Printf("------------------------------")
+	combinedModel.List.SetSize(msg.Width/divisor, msg.Height-v)
+	trackModel.List.SetSize(msg.Width/divisor, msg.Height-v)
+	selectModel.List.SetSize(msg.Width/divisor, msg.Height-v)
+	log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
+	log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
+	log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
+	log.Printf("------------------------------")
+	log.Printf("------------------------------")
+
+	m.combined = combinedModel
+	m.track = trackModel
+	m.playlistSelect = selectModel
 }

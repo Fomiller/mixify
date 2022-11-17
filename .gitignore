@@ -16,3 +16,6 @@
 
 .env
 token.json
+
+# logging
+debug.log

@@ -43,14 +43,19 @@ func New() Model {
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
 	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
-	combinedList := list.New(items, delegate, 60, 50)
-	combinedList.KeyMap.NextPage = key.NewBinding(
+	docStyle.GetFrameSize()
+	list := list.New(items, delegate, 60, 50)
+
+	// h, v := docStyle.GetFrameSize()
+	// list.SetSize(msg.Width/divisor, msg.Height-v)
+
+	list.KeyMap.NextPage = key.NewBinding(
 		key.WithKeys("pgdown", "J"),
 	)
-	combinedList.KeyMap.PrevPage = key.NewBinding(
+	list.KeyMap.PrevPage = key.NewBinding(
 		key.WithKeys("pgup", "K"),
 	)
-	return Model{Focused: false, List: combinedList}
+	return Model{Focused: false, List: list}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -66,8 +71,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.List.SetSize(msg.Width-h, msg.Height-v)
+		// h, v := docStyle.GetFrameSize()
+		// m.List.SetSize(msg.Width-h, msg.Height-v)
 
 	// Is it a key press?
 	case tea.KeyMsg:

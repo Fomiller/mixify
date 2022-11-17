@@ -53,6 +53,7 @@ func New() Model {
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
 	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#3FB925", Dark: "#3FB925"})
+	// log.Printf("track del w:%v h:%v", delegate.Width(), delegate.Height())
 
 	trackList := list.New(items, delegate, 60, 50)
 	trackList.KeyMap.NextPage = key.NewBinding(
@@ -78,8 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
-		// h, v := docStyle.GetFrameSize()
-		m.List.SetSize(msg.Width/3, msg.Height)
+		// // h, v := docStyle.GetFrameSize()
+		// m.List.SetSize(msg.Width/3, msg.Height)
 
 	// Is it a key press?
 	case tea.KeyMsg:

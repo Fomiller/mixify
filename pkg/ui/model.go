@@ -30,6 +30,8 @@ type Model struct {
 
 	playlist tea.Model
 	track    tea.Model
+
+	ready bool
 }
 
 type item struct {
@@ -48,11 +50,13 @@ func New() Model {
 		state:    MAIN,
 		playlist: playlist.New(),
 		track:    playlist.New(),
+		ready:    false,
 	}
 	items := []list.Item{
 		item{view: PLAYLIST, title: "PLAYLIST", desc: "create playlists"},
 		item{view: TRACK, title: "TRACKS", desc: "edit tracks"},
 	}
+
 	m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
 
 	return m
@@ -126,8 +130,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.WindowSizeMsg:
-			h, v := docStyle.GetFrameSize()
-			m.list.SetSize(msg.Width-h, msg.Height-v)
+			_, v := docStyle.GetFrameSize()
+			m.list.SetSize(msg.Width/2, msg.Height-v)
 
 		// Is it a key press?
 		case tea.KeyMsg:

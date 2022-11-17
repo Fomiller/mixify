@@ -2,7 +2,6 @@ package playlistSelect
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/Fomiller/mixify/pkg/auth"
@@ -24,6 +23,5 @@ func GetUserPlaylistsCmd() tea.Msg {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(playlist)
 	return models.PlaylistMsg(playlist)
 }
