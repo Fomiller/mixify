@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"log"
+
 	"github.com/Fomiller/mixify/pkg/ui/models"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
 	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
@@ -27,11 +29,12 @@ type Model struct {
 	cursor int // which item our cursor is pointing at, This could be pulled into a nested model?
 	status int
 	err    error
+	ctx    ProgramContext
 
 	playlist tea.Model
 	track    tea.Model
 
-	ready bool
+	loaded bool
 }
 
 type item struct {
@@ -47,10 +50,11 @@ func (i item) FilterValue() string { return i.title }
 func New() Model {
 	// init main model values
 	m := Model{
-		state:    MAIN,
-		playlist: playlist.New(),
-		track:    playlist.New(),
-		ready:    false,
+		state: MAIN,
+		// playlist: playlist.New(),
+		// track:    playlist.New(),
+		loaded: false,
+		ctx:    ProgramContext{},
 	}
 	items := []list.Item{
 		item{view: PLAYLIST, title: "PLAYLIST", desc: "create playlists"},
@@ -92,6 +96,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// handle the update functions for views other then the main menu
 	switch m.state {
 
+	// if the state is PLAYLIST
 	case PLAYLIST:
 		// return a new updated model and a cmd
 		model, newCmd := m.playlist.Update(msg)
@@ -105,6 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// update the stored model
 		m.playlist = playlistModel
 
+	// if the state is TRACK
 	case TRACK:
 		// return a new updated model and a cmd
 		model, newCmd := m.track.Update(msg)
@@ -130,8 +136,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.WindowSizeMsg:
-			_, v := docStyle.GetFrameSize()
-			m.list.SetSize(msg.Width/2, msg.Height-v)
+			log.Println("WINDOW main")
+			if !m.loaded {
+				m.ctx.ScreenHeight = msg.Height
+				m.ctx.ScreenWidth = msg.Width
+				h, v := docStyle.GetFrameSize()
+				m.list.SetSize(msg.Width-h, msg.Height-v)
+				m.playlist = playlist.New(msg)
+				m.track = playlist.New(msg)
+				m.loaded = true
+			}
+			// _, v := docStyle.GetFrameSize()
+			// m.list.SetSize(msg.Width/2, msg.Height-v)
 
 		// Is it a key press?
 		case tea.KeyMsg:
@@ -153,8 +169,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list, cmd = m.list.Update(msg)
 
 	}
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
+
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 

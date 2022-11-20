@@ -2,6 +2,7 @@ package combined
 
 import (
 	"context"
+	"log"
 
 	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
@@ -25,6 +26,8 @@ type Model struct {
 	status  int
 	err     error
 	name    string
+	Width   int
+	Height  int
 }
 
 type Item struct {
@@ -38,7 +41,7 @@ func (i Item) Title() string       { return i.title }
 func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
-func New() Model {
+func New(msg tea.WindowSizeMsg) Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
@@ -55,7 +58,12 @@ func New() Model {
 	list.KeyMap.PrevPage = key.NewBinding(
 		key.WithKeys("pgup", "K"),
 	)
-	return Model{Focused: false, List: list}
+	return Model{
+		Focused: false,
+		List:    list,
+		Width:   msg.Width,
+		Height:  msg.Height,
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -95,14 +103,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.Confirm == true {
-		cm := confirm.InitialModel()
+		cm := confirm.New()
 		return docStyle.Render(cm.View())
 	}
+	h, _ := docStyle.GetFrameSize()
 	switch m.Focused {
 	case true:
-		return focusedStyle.Render(m.List.View())
+		log.Println("COMBINED WIDTH: ", m.Width)
+		return focusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	default:
-		return docStyle.Render(m.List.View())
+		return docStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	}
 }
 
@@ -164,4 +174,12 @@ func chunkIDs(slice []spotify.ID, chunkSize int) [][]spotify.ID {
 	}
 
 	return chunks
+}
+
+func (m *Model) SetWidth(width int) {
+	m.Width = width
+}
+
+func (m *Model) SetHeight(height int) {
+	m.Height = height
 }

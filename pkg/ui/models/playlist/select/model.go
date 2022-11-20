@@ -30,6 +30,8 @@ type Model struct {
 	status       int
 	err          error
 	name         string
+	Width        int
+	Height       int
 }
 
 type Item struct {
@@ -85,9 +87,14 @@ func UpdateUserPlaylists() list.Model {
 	return playlistList
 }
 
-func New() Model {
+func New(msg tea.WindowSizeMsg) Model {
 	list := UpdateUserPlaylists()
-	return Model{Focused: true, List: list}
+	return Model{
+		Focused: true,
+		List:    list,
+		Width:   msg.Width,
+		Height:  msg.Height,
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -103,8 +110,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
-		// h, v := docStyle.GetFrameSize()
-		// m.List.SetSize(msg.Width-h, msg.Height-v)
 
 	// Is it a key press?
 	case tea.KeyMsg:
@@ -129,11 +134,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	h, _ := docStyle.GetFrameSize()
 	switch m.Focused {
 	case true:
-		return focusedStyle.Render(m.List.View())
+		return focusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	default:
-		return docStyle.Render(m.List.View())
+		return docStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	}
 }
 
@@ -143,4 +149,12 @@ func (m Model) Init() tea.Cmd {
 
 func (m *Model) MoveToNext() tea.Msg {
 	return nil
+}
+
+func (m *Model) SetWidth(width int) {
+	m.Width = width
+}
+
+func (m *Model) SetHeight(height int) {
+	m.Height = height
 }

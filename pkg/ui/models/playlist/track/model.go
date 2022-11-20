@@ -3,6 +3,7 @@ package track
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/Fomiller/mixify/pkg/auth"
 	"github.com/Fomiller/mixify/pkg/ui/models"
@@ -16,6 +17,8 @@ import (
 type view string
 
 type Model struct {
+	Width        int
+	Height       int
 	state        view
 	Focused      bool
 	List         list.Model
@@ -48,12 +51,11 @@ func (i *Item) ToggleSelected() {
 	i.Selected = !i.Selected
 }
 
-func New() Model {
+func New(msg tea.WindowSizeMsg) Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
 	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#3FB925", Dark: "#3FB925"})
-	// log.Printf("track del w:%v h:%v", delegate.Width(), delegate.Height())
 
 	trackList := list.New(items, delegate, 60, 50)
 	trackList.KeyMap.NextPage = key.NewBinding(
@@ -63,7 +65,12 @@ func New() Model {
 		key.WithKeys("pgup", "K"),
 	)
 
-	return Model{Focused: false, List: trackList}
+	return Model{
+		Focused: false,
+		List:    trackList,
+		Width:   msg.Width,
+		Height:  msg.Height,
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -102,11 +109,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	h, _ := docStyle.GetFrameSize()
 	switch m.Focused {
 	case true:
-		return focusedStyle.Render(m.List.View())
+		log.Println("TRACK WIDTH: ", m.Width)
+		return focusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	default:
-		return docStyle.Render(m.List.View())
+		return docStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	}
 }
 
@@ -174,4 +183,12 @@ func (m Model) GetSelectedTracks() []list.Item {
 	}
 	m.List.SetItems(selected)
 	return m.List.Items()
+}
+
+func (m *Model) SetWidth(width int) {
+	m.Width = width
+}
+
+func (m *Model) SetHeight(height int) {
+	m.Height = height
 }

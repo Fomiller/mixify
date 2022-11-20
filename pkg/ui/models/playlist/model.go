@@ -30,13 +30,16 @@ type Model struct {
 	err     error
 	view    view
 	name    string
+	ctx     ProgramContext
 
 	combined       tea.Model
 	playlistSelect tea.Model
 	track          tea.Model
 	confirm        tea.Model
 
-	ready bool
+	loaded bool
+	Width  int
+	Height int
 }
 
 type item struct {
@@ -49,17 +52,28 @@ func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 
-func New() tea.Model {
+func New(msg tea.WindowSizeMsg) tea.Model {
 	m := Model{
 		state:          PLAYLIST_VIEW_1,
-		combined:       combined.New(),
-		playlistSelect: playlistSelect.New(),
-		track:          track.New(),
-		confirm:        confirm.InitialModel(),
-		ready:          false,
+		loaded:         false,
+		Width:          msg.Width,
+		Height:         msg.Height,
+		combined:       combined.New(msg),
+		playlistSelect: playlistSelect.New(msg),
+		track:          track.New(msg),
+		confirm:        confirm.New(),
 	}
 
 	return m
+}
+
+func (m Model) ResetModel() tea.Model {
+	return Model{
+		combined:       combined.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		playlistSelect: playlistSelect.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		track:          track.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		confirm:        confirm.New(),
+	}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -72,6 +86,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// update nested models based off of state
 	switch m.state {
 	case PLAYLIST_VIEW_1:
+		log.Println("bing")
 		// return a new updated model and a cmd
 		model, newCmd := m.playlistSelect.Update(msg)
 		// assert returned interface into struct
@@ -138,7 +153,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		m = New().(Model)
+		m = m.ResetModel().(Model)
 		return m, nil
 
 	case models.ResetStateMsg:
@@ -189,6 +204,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter", " ":
 			switch m.state {
 			case PLAYLIST_VIEW_1:
+				log.Println("bang")
 				selectModel, _ := m.playlistSelect.(playlistSelect.Model)
 				trackModel := m.track.(track.Model)
 				combinedModel := m.combined.(combined.Model)
@@ -257,7 +273,6 @@ func (m Model) View() string {
 	} else {
 		output = lipgloss.JoinHorizontal(lipgloss.Center, m.playlistSelect.View(), m.track.View(), m.combined.View())
 	}
-
 	return output
 }
 
@@ -352,25 +367,42 @@ func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) setModelSize(msg tea.WindowSizeMsg, h int, v int) {
 	divisor := 3
+	// log.Println(msg)
 	combinedModel := m.combined.(combined.Model)
-	trackModel := m.track.(track.Model)
-	selectModel := m.playlistSelect.(playlistSelect.Model)
+	combinedModel.SetHeight(msg.Height)
+	combinedModel.SetWidth(msg.Width)
 
-	log.Print(msg)
-	log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
-	log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
-	log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
-	log.Printf("------------------------------")
-	combinedModel.List.SetSize(msg.Width/divisor, msg.Height-v)
-	trackModel.List.SetSize(msg.Width/divisor, msg.Height-v)
-	selectModel.List.SetSize(msg.Width/divisor, msg.Height-v)
-	log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
-	log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
-	log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
-	log.Printf("------------------------------")
-	log.Printf("------------------------------")
+	trackModel := m.track.(track.Model)
+	trackModel.SetHeight(msg.Height)
+	trackModel.SetWidth(msg.Width)
+
+	selectModel := m.playlistSelect.(playlistSelect.Model)
+	selectModel.SetHeight(msg.Height)
+	selectModel.SetWidth(msg.Width)
+
+	// log.Print(msg)
+	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
+	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
+	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
+	// log.Printf("------------------------------")
+	combinedModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
+	trackModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
+	selectModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
+	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
+	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
+	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
+	// log.Printf("------------------------------")
+	// log.Printf("------------------------------")
 
 	m.combined = combinedModel
 	m.track = trackModel
 	m.playlistSelect = selectModel
+}
+
+func (m *Model) loadModels(msg tea.WindowSizeMsg) {
+	m.state = PLAYLIST_VIEW_1
+	m.combined = combined.New(msg)
+	m.playlistSelect = playlistSelect.New(msg)
+	m.track = track.New(msg)
+	m.confirm = confirm.New()
 }
