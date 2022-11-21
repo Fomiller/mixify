@@ -3,9 +3,9 @@ package ui
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/pkg/ui/models"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	models "github.com/Fomiller/mixify/ui/components"
+	"github.com/Fomiller/mixify/ui/components/playlist"
+	"github.com/Fomiller/mixify/ui/components/playlist/track"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
