@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Fomiller/mixify/pkg/auth"
+	"github.com/Fomiller/mixify/internal/auth"
 )
 
 func createConfig(homeDir string) {
