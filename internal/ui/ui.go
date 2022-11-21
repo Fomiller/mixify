@@ -3,11 +3,11 @@ package ui
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/internal/ui/components/playlist"
-	"github.com/Fomiller/mixify/internal/ui/components/playlist/track"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
+	"github.com/Fomiller/mixify/internal/ui/views/combineplaylists"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -103,7 +103,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return a new updated model and a cmd
 		model, newCmd := m.playlist.Update(msg)
 		// assert returned interface into struct
-		playlistModel, ok := model.(playlist.Model)
+		playlistModel, ok := model.(combineplaylists.Model)
 		if !ok {
 			panic("could not perfom assertion on playlist model")
 		}
@@ -144,8 +144,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.ScreenWidth = msg.Width
 				h, v := styles.DocStyle.GetFrameSize()
 				m.list.SetSize(msg.Width-h, msg.Height-v)
-				m.playlist = playlist.New(msg)
-				m.track = playlist.New(msg)
+				m.playlist = combineplaylists.New(msg)
+				m.track = combineplaylists.New(msg)
 				m.loaded = true
 			}
 			// _, v := docStyle.GetFrameSize()
