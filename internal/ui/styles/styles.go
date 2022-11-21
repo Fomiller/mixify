@@ -3,6 +3,8 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
+	horizontalSize, verticalSize = lipgloss.NewStyle().GetFrameSize()
+
 	AppStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	MenuStyle = lipgloss.NewStyle().
@@ -28,8 +30,18 @@ var (
 			Padding(0, 1)
 
 	StatusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-				Render
+				Foreground(lipgloss.AdaptiveColor{
+			Light: "#04B575",
+			Dark:  "#04B575",
+		}).
+		Render
 
-	DocStyle = lipgloss.NewStyle().Margin(1, 2).Border(lipgloss.RoundedBorder())
+	DocStyle = lipgloss.NewStyle().
+			Margin(1, 2).
+			Border(lipgloss.RoundedBorder())
+
+	FocusedStyle = lipgloss.NewStyle().
+			Margin(1, 2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62"))
 )
