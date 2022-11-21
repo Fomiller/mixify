@@ -1,4 +1,4 @@
-package ui
+package context
 
 type ProgramContext struct {
 	ScreenHeight int
