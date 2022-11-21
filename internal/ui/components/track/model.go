@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Fomiller/mixify/pkg/auth"
-	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -77,11 +77,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 
-	case models.StatusMsg:
+	case messages.StatusMsg:
 		m.status = int(msg)
 		return m, nil
 
-	case models.ErrMsg:
+	case messages.ErrMsg:
 		m.err = msg
 		return m, tea.Quit
 
@@ -95,7 +95,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return to previous view with backspace
 		case tea.KeyBackspace.String():
 			return m, func() tea.Msg {
-				return models.BackMsg(true)
+				return messages.BackMsg(true)
 			}
 
 		// These keys should exit the program.

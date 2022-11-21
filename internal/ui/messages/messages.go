@@ -1,6 +1,9 @@
-package models
+package messages
 
-import "github.com/zmb3/spotify/v2"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/zmb3/spotify/v2"
+)
 
 // need to implement these down the road
 type StatusMsg int
@@ -18,3 +21,11 @@ type PrevMsg bool
 
 type UserMsg *spotify.PrivateUser
 type PlaylistMsg *spotify.SimplePlaylistPage
+
+type errMsg struct{ err error }
+
+func (e errMsg) Error() string { return e.err.Error() }
+
+func CreatePlaylistCmd() tea.Msg {
+	return CreatePlaylistMsg(true)
+}

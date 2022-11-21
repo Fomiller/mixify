@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Fomiller/mixify/pkg/auth"
-	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui/messages"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -15,7 +15,7 @@ func GetUserCmd() tea.Msg {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return models.UserMsg(user)
+	return messages.UserMsg(user)
 }
 
 func GetUserPlaylistsCmd() tea.Msg {
@@ -23,5 +23,5 @@ func GetUserPlaylistsCmd() tea.Msg {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return models.PlaylistMsg(playlist)
+	return messages.PlaylistMsg(playlist)
 }

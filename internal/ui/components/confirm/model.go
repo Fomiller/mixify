@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Fomiller/mixify/pkg/ui/models"
+	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -87,7 +87,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// If so, exit.
 			if s == "enter" && m.FocusIndex == len(m.Inputs) {
 				// cmd = playlist.CreatePlaylistCmd(m.Inputs[0].Value(), m.Inputs[1].Value())
-				return m, models.CreatePlaylistCmd
+				return m, messages.CreatePlaylistCmd
 			}
 
 			// Cycle indexes

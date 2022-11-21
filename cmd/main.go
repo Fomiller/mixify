@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Fomiller/mixify/pkg/auth"
-	"github.com/Fomiller/mixify/pkg/ui"
+	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
 	"github.com/zmb3/spotify/v2"

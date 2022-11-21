@@ -1,13 +1,15 @@
-package playlist
+package combineview
 
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/pkg/ui/models"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist/combined"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist/confirm"
-	playlistSelect "github.com/Fomiller/mixify/pkg/ui/models/playlist/select"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/Fomiller/mixify/internal/ui/components/combined"
+	"github.com/Fomiller/mixify/internal/ui/components/confirm"
+	playlistSelect "github.com/Fomiller/mixify/internal/ui/components/select"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
+	"github.com/Fomiller/mixify/internal/ui/context"
+	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/styles"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
@@ -30,7 +32,7 @@ type Model struct {
 	err     error
 	view    view
 	name    string
-	ctx     ProgramContext
+	ctx     context.ProgramContext
 
 	combined       tea.Model
 	playlistSelect tea.Model
@@ -141,10 +143,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
+		h, v := styles.DocStyle.GetFrameSize()
 		m.setModelSize(msg, h, v)
 
-	case models.CreatePlaylistMsg:
+	case messages.CreatePlaylistMsg:
 		promptModel := m.confirm.(confirm.Model)
 		combinedModel := m.combined.(combined.Model)
 		name := promptModel.Inputs[0].Value()
@@ -156,15 +158,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m = m.ResetModel().(Model)
 		return m, nil
 
-	case models.ResetStateMsg:
+	case messages.ResetStateMsg:
 		m.state = PLAYLIST_VIEW_1
 		return m, nil
 
-	case models.StatusMsg:
+	case messages.StatusMsg:
 		m.status = int(msg)
 		return m, nil
 
-	case models.ErrMsg:
+	case messages.ErrMsg:
 		m.err = msg
 		return m, tea.Quit
 
@@ -179,7 +181,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// override backspace to allow for text input
 			default:
 				return m, func() tea.Msg {
-					return models.BackMsg(true)
+					return messages.BackMsg(true)
 				}
 			}
 

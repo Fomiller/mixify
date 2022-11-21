@@ -3,9 +3,11 @@ package ui
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/pkg/ui/models"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist"
-	"github.com/Fomiller/mixify/pkg/ui/models/playlist/track"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
+	"github.com/Fomiller/mixify/internal/ui/context"
+	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/styles"
+	"github.com/Fomiller/mixify/internal/ui/views/combineview"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -29,7 +31,7 @@ type Model struct {
 	cursor int // which item our cursor is pointing at, This could be pulled into a nested model?
 	status int
 	err    error
-	ctx    ProgramContext
+	ctx    context.ProgramContext
 
 	playlist tea.Model
 	track    tea.Model
@@ -54,7 +56,7 @@ func New() Model {
 		// playlist: playlist.New(),
 		// track:    playlist.New(),
 		loaded: false,
-		ctx:    ProgramContext{},
+		ctx:    context.ProgramContext{},
 	}
 	items := []list.Item{
 		item{view: PLAYLIST, title: "PLAYLIST", desc: "create playlists"},
@@ -89,7 +91,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg.(type) {
-	case models.BackMsg:
+	case messages.BackMsg:
 		m.state = MAIN
 	}
 
@@ -101,7 +103,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return a new updated model and a cmd
 		model, newCmd := m.playlist.Update(msg)
 		// assert returned interface into struct
-		playlistModel, ok := model.(playlist.Model)
+		playlistModel, ok := model.(combineview.Model)
 		if !ok {
 			panic("could not perfom assertion on playlist model")
 		}
@@ -127,11 +129,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// if the state is MAIN
 	default:
 		switch msg := msg.(type) {
-		case statusMsg:
+		case messages.StatusMsg:
 			m.status = int(msg)
 			return m, nil
 
-		case errMsg:
+		case messages.ErrMsg:
 			m.err = msg
 			return m, tea.Quit
 
@@ -140,10 +142,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !m.loaded {
 				m.ctx.ScreenHeight = msg.Height
 				m.ctx.ScreenWidth = msg.Width
-				h, v := docStyle.GetFrameSize()
+				h, v := styles.DocStyle.GetFrameSize()
 				m.list.SetSize(msg.Width-h, msg.Height-v)
-				m.playlist = playlist.New(msg)
-				m.track = playlist.New(msg)
+				m.playlist = combineview.New(msg)
+				m.track = combineview.New(msg)
 				m.loaded = true
 			}
 			// _, v := docStyle.GetFrameSize()
@@ -176,5 +178,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func MainMenuView(m Model) string {
-	return docStyle.Render(m.list.View())
+	return styles.DocStyle.Render(m.list.View())
 }

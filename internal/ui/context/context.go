@@ -1,4 +1,4 @@
-package playlist
+package context
 
 type ProgramContext struct {
 	ScreenHeight int
