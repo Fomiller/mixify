@@ -1,4 +1,4 @@
-package combineplaylists
+package combineview
 
 import (
 	"log"
