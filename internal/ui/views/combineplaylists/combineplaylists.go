@@ -3,10 +3,10 @@ package combineplaylists
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/internal/ui/components/playlist/combined"
-	"github.com/Fomiller/mixify/internal/ui/components/playlist/confirm"
-	playlistSelect "github.com/Fomiller/mixify/internal/ui/components/playlist/select"
-	"github.com/Fomiller/mixify/internal/ui/components/playlist/track"
+	"github.com/Fomiller/mixify/internal/ui/components/combined"
+	"github.com/Fomiller/mixify/internal/ui/components/confirm"
+	playlistSelect "github.com/Fomiller/mixify/internal/ui/components/select"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
