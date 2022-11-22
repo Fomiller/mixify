@@ -25,16 +25,10 @@ var (
 )
 
 type Model struct {
-	state        view
-	Focused      bool
-	List         list.Model
+	BaseList     basecomponents.List
 	PlaylistList spotify.SimplePlaylist
-	cursor       int
-	status       int
-	err          error
-	name         string
-	Width        int
-	Height       int
+	List         list.Model
+	Name         string
 }
 
 func UpdateUserPlaylists() list.Model {
@@ -73,10 +67,12 @@ func UpdateUserPlaylists() list.Model {
 func New(msg tea.WindowSizeMsg) Model {
 	list := UpdateUserPlaylists()
 	return Model{
-		Focused: true,
-		List:    list,
-		Width:   msg.Width,
-		Height:  msg.Height,
+		List: list,
+		BaseList: basecomponents.List{
+			Focused: true,
+			Width:   msg.Width,
+			Height:  msg.Height,
+		},
 	}
 }
 
@@ -85,11 +81,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case messages.StatusMsg:
-		m.status = int(msg)
+		m.BaseList.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.err = msg
+		m.BaseList.Err = msg
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
@@ -118,11 +114,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	h, _ := styles.DocStyle.GetFrameSize()
-	switch m.Focused {
+	switch m.BaseList.Focused {
 	case true:
-		return styles.FocusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.FocusedStyle.Width((m.BaseList.Width / 3) - h).Render(m.List.View())
 	default:
-		return styles.DocStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.BaseList.Width / 3) - h).Render(m.List.View())
 	}
 }
 
@@ -135,9 +131,9 @@ func (m *Model) MoveToNext() tea.Msg {
 }
 
 func (m *Model) SetWidth(width int) {
-	m.Width = width
+	m.BaseList.Width = width
 }
 
 func (m *Model) SetHeight(height int) {
-	m.Height = height
+	m.BaseList.Height = height
 }

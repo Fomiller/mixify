@@ -1,7 +1,12 @@
 package basecomponents
 
-import "github.com/charmbracelet/bubbles/list"
+import "github.com/Fomiller/mixify/internal/ui/messages"
 
 type List struct {
-	list.Model
+	Focused bool
+	Cursor  int
+	Width   int
+	Height  int
+	Status  int
+	Err     messages.ErrMsg
 }
