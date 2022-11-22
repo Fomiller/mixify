@@ -44,4 +44,7 @@ var (
 			Margin(1, 2).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("62"))
+
+	SelectedItemStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("62"))
 )

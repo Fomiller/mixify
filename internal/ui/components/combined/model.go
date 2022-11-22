@@ -8,6 +8,7 @@ import (
 	"github.com/Fomiller/mixify/internal/ui/components/confirm"
 	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -46,7 +47,7 @@ func New(msg tea.WindowSizeMsg) Model {
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
 	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"})
-	docStyle.GetFrameSize()
+	styles.DocStyle.GetFrameSize()
 	list := list.New(items, delegate, 60, 50)
 
 	// h, v := docStyle.GetFrameSize()
@@ -104,15 +105,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	if m.Confirm == true {
 		cm := confirm.New()
-		return docStyle.Render(cm.View())
+		return styles.DocStyle.Render(cm.View())
 	}
-	h, _ := docStyle.GetFrameSize()
+	h, _ := styles.DocStyle.GetFrameSize()
 	switch m.Focused {
 	case true:
 		log.Println("COMBINED WIDTH: ", m.Width)
-		return focusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.FocusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	default:
-		return docStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	}
 }
 

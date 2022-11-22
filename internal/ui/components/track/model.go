@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fomiller/mixify/internal/auth"
 	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,7 +40,7 @@ type Item struct {
 
 func (i Item) Title() string {
 	if i.Selected == true {
-		return selectedItemStyle.Render(i.ItemTitle)
+		return styles.SelectedItemStyle.Render(i.ItemTitle)
 	} else {
 		return i.ItemTitle
 	}
@@ -109,13 +110,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	h, _ := docStyle.GetFrameSize()
+	h, _ := styles.DocStyle.GetFrameSize()
 	switch m.Focused {
 	case true:
 		log.Println("TRACK WIDTH: ", m.Width)
-		return focusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.FocusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	default:
-		return docStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.Width / 3) - h).Render(m.List.View())
 	}
 }
 
