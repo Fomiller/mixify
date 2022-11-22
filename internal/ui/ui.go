@@ -3,7 +3,7 @@ package ui
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/internal/ui/components/track"
+	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
@@ -117,7 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return a new updated model and a cmd
 		model, newCmd := m.track.Update(msg)
 		// assert returned interface into struct
-		trackModel, ok := model.(track.Model)
+		trackModel, ok := model.(tracklist.Model)
 		if !ok {
 			panic("could not perfom assertion on track model")
 		}

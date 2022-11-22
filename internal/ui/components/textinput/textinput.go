@@ -1,4 +1,4 @@
-package confirm // A simple example demonstrating the use of multiple text input components from the Bubbles component library. import ( "fmt" "strings" "github.com/charmbracelet/bubbles/textinput" tea "github.com/charmbracelet/bubbletea" "github.com/charmbracelet/lipgloss"
+package textinput // A simple example demonstrating the use of multiple text input components from the Bubbles component library. import ( "fmt" "strings" "github.com/charmbracelet/bubbles/textinput" tea "github.com/charmbracelet/bubbletea" "github.com/charmbracelet/lipgloss"
 
 import (
 	"fmt"
