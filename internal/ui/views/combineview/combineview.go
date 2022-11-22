@@ -3,6 +3,7 @@ package combineview
 import (
 	"log"
 
+	"github.com/Fomiller/mixify/internal/ui/commands"
 	"github.com/Fomiller/mixify/internal/ui/components/combined"
 	"github.com/Fomiller/mixify/internal/ui/components/confirm"
 	playlistSelect "github.com/Fomiller/mixify/internal/ui/components/select"
@@ -79,7 +80,7 @@ func (m Model) ResetModel() tea.Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return playlistSelect.GetUserPlaylistsCmd
+	return commands.GetUserPlaylistsCmd
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

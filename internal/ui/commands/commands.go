@@ -1,4 +1,4 @@
-package playlistSelect
+package commands
 
 import (
 	"context"
