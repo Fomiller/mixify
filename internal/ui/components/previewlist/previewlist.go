@@ -31,17 +31,6 @@ type Model struct {
 	Height  int
 }
 
-type Item struct {
-	title      string
-	desc       string
-	TrackID    spotify.ID
-	PlaylistID spotify.ID
-}
-
-func (i Item) Title() string       { return i.title }
-func (i Item) Description() string { return i.desc }
-func (i Item) FilterValue() string { return i.title }
-
 func New(msg tea.WindowSizeMsg) Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
