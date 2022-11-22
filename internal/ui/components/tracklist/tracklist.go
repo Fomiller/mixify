@@ -6,6 +6,8 @@ import (
 	"log"
 
 	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui/components/basecomponents"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -113,13 +115,16 @@ func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
 		}
 
 		for _, t := range result.Tracks {
-			m.List.InsertItem(len(m.List.Items())+1, Item{
-				ItemTitle:  t.Track.Name,
-				Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
-				TrackID:    t.Track.ID,
-				PlaylistID: playlist.ID,
-				Selected:   true,
-			})
+			m.List.InsertItem(len(m.List.Items())+1,
+				track.Track{
+					TrackTitle: t.Track.Name,
+					Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
+					TrackID:    t.Track.ID,
+					PlaylistID: playlist.ID,
+					Item: basecomponents.Item{
+						Selected: true,
+					},
+				})
 		}
 
 		if result.Next != "" {
@@ -137,7 +142,7 @@ func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
 func (m Model) RemoveTracks(playlistID spotify.ID) Model {
 	newList := []list.Item{}
 	for _, t := range m.List.Items() {
-		track, ok := t.(Item)
+		track, ok := t.(track.Track)
 		if !ok {
 			panic("could not assert list.Item to type Item")
 		}
@@ -152,11 +157,11 @@ func (m Model) RemoveTracks(playlistID spotify.ID) Model {
 func (m Model) GetSelectedTracks() []list.Item {
 	selected := []list.Item{}
 	for _, t := range m.List.Items() {
-		track, ok := t.(Item)
+		track, ok := t.(track.Track)
 		if !ok {
 			panic("could not assert list.Item to type Item")
 		}
-		if track.Selected != false {
+		if track.Item.Selected != false {
 			selected = append(selected, track)
 		}
 	}

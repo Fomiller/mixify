@@ -6,7 +6,7 @@ import (
 
 	"github.com/Fomiller/mixify/internal/auth"
 	"github.com/Fomiller/mixify/internal/ui/components/textinput"
-	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -125,7 +125,7 @@ func (m Model) CreatePlaylist(name string, desc string) error {
 	var trackIDs []spotify.ID
 	tracks := m.List.Items()
 	for _, t := range tracks {
-		x := t.(tracklist.Item)
+		x := t.(track.Track)
 		trackIDs = append(trackIDs, x.TrackID)
 	}
 	// make multiple calls to add tracks if needed, spotify only supports 100 at a time

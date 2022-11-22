@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui/components/basecomponents"
+	"github.com/Fomiller/mixify/internal/ui/components/playlist"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -44,10 +46,12 @@ func UpdateUserPlaylists() list.Model {
 	}
 
 	for _, p := range spotifyUserPlaylists.Playlists {
-		item := Item{
-			title:    emoji.RemoveAll(p.Name),
-			desc:     p.Description,
-			Selected: false,
+		item := playlist.Playlist{
+			PlaylistTitle: emoji.RemoveAll(p.Name),
+			Desc:          p.Description,
+			Item: basecomponents.Item{
+				Selected: false,
+			},
 			Playlist: p,
 		}
 		items = append(items, item)
