@@ -4,16 +4,18 @@ import (
 	"log"
 
 	"github.com/Fomiller/mixify/internal/ui/commands"
-	"github.com/Fomiller/mixify/internal/ui/components/combined"
-	"github.com/Fomiller/mixify/internal/ui/components/confirm"
+	"github.com/Fomiller/mixify/internal/ui/components/base"
+	"github.com/Fomiller/mixify/internal/ui/components/playlist"
 	"github.com/Fomiller/mixify/internal/ui/components/playlistlist"
+	"github.com/Fomiller/mixify/internal/ui/components/previewlist"
+	"github.com/Fomiller/mixify/internal/ui/components/textinput"
+	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/zmb3/spotify/v2"
 )
 
 const (
@@ -26,56 +28,41 @@ const (
 type view string
 
 type Model struct {
-	state   view
-	focused view
-	cursor  int
-	status  int
-	err     error
-	view    view
-	name    string
-	ctx     context.ProgramContext
+	Base  base.List
+	state view
+	ctx   context.ProgramContext
 
-	combined       tea.Model
-	playlistSelect tea.Model
-	track          tea.Model
-	confirm        tea.Model
+	playlistlist playlistlist.Model
+	tracklist    tracklist.Model
+	previewlist  previewlist.Model
+	confirm      textinput.Model
 
 	loaded bool
 	Width  int
 	Height int
 }
 
-type item struct {
-	title string
-	desc  string
-	ID    spotify.ID
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
-
-func New(msg tea.WindowSizeMsg) tea.Model {
+func New(msg tea.WindowSizeMsg) Model {
 	m := Model{
-		state:          PLAYLIST_VIEW_1,
-		loaded:         false,
-		Width:          msg.Width,
-		Height:         msg.Height,
-		combined:       combined.New(msg),
-		playlistSelect: playlistlist.New(msg),
-		track:          tracklist.New(msg),
-		confirm:        confirm.New(),
+		state:        PLAYLIST_VIEW_1,
+		loaded:       false,
+		Width:        msg.Width,
+		Height:       msg.Height,
+		previewlist:  previewlist.New(msg),
+		playlistlist: playlistlist.New(msg),
+		tracklist:    tracklist.New(msg),
+		confirm:      textinput.New(),
 	}
 
 	return m
 }
 
-func (m Model) ResetModel() tea.Model {
+func (m Model) ResetModel() Model {
 	return Model{
-		combined:       combined.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		playlistSelect: playlistlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		track:          tracklist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		confirm:        confirm.New(),
+		previewlist:  previewlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		playlistlist: playlistlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		tracklist:    tracklist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		confirm:      textinput.New(),
 	}
 }
 
@@ -84,62 +71,28 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var (
+		cmds []tea.Cmd
+		cmd  tea.Cmd
+	)
 
 	// update nested models based off of state
 	switch m.state {
 	case PLAYLIST_VIEW_1:
-		log.Println("bing")
-		// return a new updated model and a cmd
-		model, newCmd := m.playlistSelect.Update(msg)
-		// assert returned interface into struct
-		playlistSelectModel, ok := model.(playlistlist.Model)
-		if !ok {
-			panic("could not perfom assertion on playlist select model")
-		}
-		// set cmd to the returned cmd
-		cmd = newCmd
-		// update the stored model
-		m.playlistSelect = playlistSelectModel
+		m.playlistlist, cmd = m.playlistlist.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case PLAYLIST_VIEW_2:
-		// return a new updated model and a cmd
-		model, newCmd := m.track.Update(msg)
-		// assert returned interface into struct
-		trackSelectModel, ok := model.(tracklist.Model)
-		if !ok {
-			panic("could not perfom assertion on track select model")
-		}
-		// set cmd to the returned cmd
-		cmd = newCmd
-		// update the stored model
-		m.track = trackSelectModel
+		m.tracklist, cmd = m.tracklist.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case PLAYLIST_VIEW_3:
-		// return a new updated model and a cmd
-		model, newCmd := m.combined.Update(msg)
-		// assert returned interface into struct
-		combinedPlaylistModel, ok := model.(combined.Model)
-		if !ok {
-			panic("could not perfom assertion on track select model")
-		}
-		// set cmd to the returned cmd
-		cmd = newCmd
-		// update the stored model
-		m.combined = combinedPlaylistModel
+		m.previewlist, cmd = m.previewlist.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case PLAYLIST_VIEW_4:
-		// return a new updated model and a cmd
-		model, newCmd := m.confirm.Update(msg)
-		// assert returned interface into struct
-		confirmModel, ok := model.(confirm.Model)
-		if !ok {
-			panic("could not perfom assertion on confirm input model")
-		}
-		// set cmd to the returned cmd
-		cmd = newCmd
-		// update the stored model
-		m.confirm = confirmModel
+		m.confirm, cmd = m.confirm.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch msg := msg.(type) {
@@ -148,15 +101,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setModelSize(msg, h, v)
 
 	case messages.CreatePlaylistMsg:
-		promptModel := m.confirm.(confirm.Model)
-		combinedModel := m.combined.(combined.Model)
-		name := promptModel.Inputs[0].Value()
-		desc := promptModel.Inputs[1].Value()
-		err := combinedModel.CreatePlaylist(name, desc)
+		name := m.confirm.Inputs[0].Value()
+		desc := m.confirm.Inputs[1].Value()
+		err := m.previewlist.CreatePlaylist(name, desc)
 		if err != nil {
 			log.Fatal(err)
 		}
-		m = m.ResetModel().(Model)
+		m = m.ResetModel()
 		return m, nil
 
 	case messages.ResetStateMsg:
@@ -164,11 +115,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case messages.StatusMsg:
-		m.status = int(msg)
+		m.Base.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.err = msg
+		m.Base.Err = msg
 		return m, tea.Quit
 
 	// Is it a key press?
@@ -207,52 +158,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter", " ":
 			switch m.state {
 			case PLAYLIST_VIEW_1:
-				log.Println("bang")
-				selectModel, _ := m.playlistSelect.(playlistlist.Model)
-				trackModel := m.track.(tracklist.Model)
-				combinedModel := m.combined.(combined.Model)
+				item := m.playlistlist.List.SelectedItem().(playlist.Playlist)
+				cursor := m.playlistlist.List.Index()
 
-				item := selectModel.List.SelectedItem().(playlistlist.Item)
-				cursor := selectModel.List.Index()
-
-				if item.Selected == false {
+				if item.Base.Selected == false {
 					item.ToggleSelected()
-					selectModel.List.SetItem(cursor, item)
-					trackModel = trackModel.InsertTracks(item.Playlist)
-					selectedTracks := trackModel.GetSelectedTracks()
-					combinedModel.List.SetItems(selectedTracks)
-
-					m.playlistSelect = selectModel
-					m.track = trackModel
-					m.combined = combinedModel
-					return m, nil
-
+					m.playlistlist.List.SetItem(cursor, item)
+					m.tracklist = m.tracklist.InsertTracks(item.Playlist)
+					selectedTracks := m.tracklist.GetSelectedTracks()
+					m.previewlist.List.SetItems(selectedTracks)
 				} else {
 					item.ToggleSelected()
-					selectModel.List.SetItem(cursor, item)
-					trackModel = trackModel.RemoveTracks(item.Playlist.ID)
-					selectedTracks := trackModel.GetSelectedTracks()
-					combinedModel.List.SetItems(selectedTracks)
+					m.playlistlist.List.SetItem(cursor, item)
+					m.tracklist = m.tracklist.RemoveTracks(item.Playlist.ID)
+					selectedTracks := m.tracklist.GetSelectedTracks()
+					m.previewlist.List.SetItems(selectedTracks)
 
-					m.playlistSelect = selectModel
-					m.track = trackModel
-					m.combined = combinedModel
-					return m, nil
 				}
+				return m, nil
 
 			case PLAYLIST_VIEW_2:
-				trackModel := m.track.(tracklist.Model)
-				item := trackModel.List.SelectedItem().(tracklist.Item)
-				cursor := trackModel.List.Index()
+				item := m.tracklist.List.SelectedItem().(track.Track)
+				cursor := m.tracklist.List.Index()
 
-				// if item.Selected == false {
 				item.ToggleSelected()
-				trackModel.List.SetItem(cursor, item)
-				combinedModel := m.combined.(combined.Model)
-				selectedTracks := trackModel.GetSelectedTracks()
-				combinedModel.List.SetItems(selectedTracks)
-				m.track = trackModel
-				m.combined = combinedModel
+				m.tracklist.List.SetItem(cursor, item)
+				selectedTracks := m.tracklist.GetSelectedTracks()
+				m.previewlist.List.SetItems(selectedTracks)
 				return m, nil
 
 			case PLAYLIST_VIEW_3:
@@ -261,10 +193,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 // Main Model view
@@ -274,138 +203,72 @@ func (m Model) View() string {
 	if m.state == PLAYLIST_VIEW_4 {
 		output = m.confirm.View()
 	} else {
-		output = lipgloss.JoinHorizontal(lipgloss.Center, m.playlistSelect.View(), m.track.View(), m.combined.View())
+		output = lipgloss.JoinHorizontal(lipgloss.Center, m.playlistlist.View(), m.tracklist.View(), m.previewlist.View())
 	}
 	return output
 }
 
 func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if m.state == PLAYLIST_VIEW_1 {
+	switch m.state {
+	case PLAYLIST_VIEW_1:
+		m.playlistlist.Base.Focused = false
+		m.tracklist.Base.Focused = true
 		m.state = PLAYLIST_VIEW_2
-		// focus track model
-		t, ok := m.track.(tracklist.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		t.Focused = true
-		m.track = t
 
-		// unfocus playlistselect model
-		p, ok := m.playlistSelect.(playlistlist.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		p.Focused = false
-		m.playlistSelect = p
-
-	} else if m.state == PLAYLIST_VIEW_2 {
+	case PLAYLIST_VIEW_2:
+		m.tracklist.Base.Focused = false
+		m.previewlist.Base.Focused = true
 		m.state = PLAYLIST_VIEW_3
-		c, ok := m.combined.(combined.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		c.Focused = true
-		m.combined = c
-
-		// unfocus playlistselect model
-		t, ok := m.track.(tracklist.Model)
-		if !ok {
-			panic("some went wrong")
-		}
-		t.Focused = false
-		m.track = t
-
-	} else {
-		return m, nil
 	}
-
 	return m, nil
 }
 
 func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	if m.state == PLAYLIST_VIEW_3 {
+	switch m.state {
+	case PLAYLIST_VIEW_3:
+		m.previewlist.Base.Focused = false
+		m.tracklist.Base.Focused = true
 		m.state = PLAYLIST_VIEW_2
 
-		// focus track model
-		t, ok := m.track.(tracklist.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		t.Focused = true
-		m.track = t
-		// unfocus combiined model
-		c, ok := m.combined.(combined.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		c.Focused = false
-		m.combined = c
-
-	} else if m.state == PLAYLIST_VIEW_2 {
+	case PLAYLIST_VIEW_2:
+		m.playlistlist.Base.Focused = true
+		m.tracklist.Base.Focused = false
 		m.state = PLAYLIST_VIEW_1
-		// focus playlistselect model
-		p, ok := m.playlistSelect.(playlistlist.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		p.Focused = true
-		m.playlistSelect = p
-
-		// unfocus track model
-		t, ok := m.track.(tracklist.Model)
-		if !ok {
-			panic("something went wrong")
-		}
-		t.Focused = false
-		m.track = t
-
-	} else {
-		return m, cmd
 	}
-
-	return m, cmd
+	return m, nil
 }
 
 func (m *Model) setModelSize(msg tea.WindowSizeMsg, h int, v int) {
 	divisor := 3
-	// log.Println(msg)
-	combinedModel := m.combined.(combined.Model)
-	combinedModel.SetHeight(msg.Height)
-	combinedModel.SetWidth(msg.Width)
+	m.previewlist.SetHeight(msg.Height)
+	m.previewlist.SetWidth(msg.Width)
 
-	trackModel := m.track.(tracklist.Model)
-	trackModel.SetHeight(msg.Height)
-	trackModel.SetWidth(msg.Width)
+	m.tracklist.SetHeight(msg.Height)
+	m.tracklist.SetWidth(msg.Width)
 
-	selectModel := m.playlistSelect.(playlistlist.Model)
-	selectModel.SetHeight(msg.Height)
-	selectModel.SetWidth(msg.Width)
+	m.playlistlist.SetHeight(msg.Height)
+	m.playlistlist.SetWidth(msg.Width)
+
+	m.previewlist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
+	m.tracklist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
+	m.playlistlist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
 
 	// log.Print(msg)
 	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
 	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
 	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
 	// log.Printf("------------------------------")
-	combinedModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
-	trackModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
-	selectModel.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
 	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
 	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
 	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
 	// log.Printf("------------------------------")
 	// log.Printf("------------------------------")
-
-	m.combined = combinedModel
-	m.track = trackModel
-	m.playlistSelect = selectModel
 }
 
 func (m *Model) loadModels(msg tea.WindowSizeMsg) {
 	m.state = PLAYLIST_VIEW_1
-	m.combined = combined.New(msg)
-	m.playlistSelect = playlistlist.New(msg)
-	m.track = tracklist.New(msg)
-	m.confirm = confirm.New()
+	m.previewlist = previewlist.New(msg)
+	m.playlistlist = playlistlist.New(msg)
+	m.tracklist = tracklist.New(msg)
+	m.confirm = textinput.New()
 }

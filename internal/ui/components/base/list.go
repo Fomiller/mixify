@@ -1,4 +1,4 @@
-package basecomponents
+package base
 
 import "github.com/Fomiller/mixify/internal/ui/messages"
 

@@ -1,4 +1,4 @@
-package mainmenuview
+package updateview
 
 import tea "github.com/charmbracelet/bubbletea"
 

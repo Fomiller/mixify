@@ -1,13 +1,13 @@
 package playlist
 
 import (
-	"github.com/Fomiller/mixify/internal/ui/components/basecomponents"
+	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/zmb3/spotify/v2"
 )
 
 type Playlist struct {
-	Item          basecomponents.Item
+	Base          base.Item
 	Playlist      spotify.SimplePlaylist
 	ID            spotify.ID
 	PlaylistTitle string
@@ -15,11 +15,11 @@ type Playlist struct {
 }
 
 func (p *Playlist) ToggleSelected() {
-	p.Item.Selected = !p.Item.Selected
+	p.Base.Selected = !p.Base.Selected
 }
 
 func (p Playlist) Title() string {
-	if p.Item.Selected == true {
+	if p.Base.Selected == true {
 		return styles.SelectedItemStyle.Render(p.PlaylistTitle)
 	} else {
 		return p.PlaylistTitle

@@ -1,4 +1,4 @@
-package mainmenuview
+package deleteview
 
 import tea "github.com/charmbracelet/bubbletea"
 

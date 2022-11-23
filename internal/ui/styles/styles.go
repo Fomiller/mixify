@@ -47,4 +47,7 @@ var (
 
 	SelectedItemStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("62"))
+
+	Selected   = lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"}
+	Unselected = lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"}
 )

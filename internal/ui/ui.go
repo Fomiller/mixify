@@ -3,11 +3,15 @@ package ui
 import (
 	"log"
 
-	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
+	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/Fomiller/mixify/internal/ui/views/combineview"
+	"github.com/Fomiller/mixify/internal/ui/views/deleteview"
+	"github.com/Fomiller/mixify/internal/ui/views/editview"
+	"github.com/Fomiller/mixify/internal/ui/views/mainmenuview"
+	"github.com/Fomiller/mixify/internal/ui/views/updateview"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -25,17 +29,18 @@ const (
 
 // MAIN MODEL
 type Model struct {
+	Base base.List
+	list list.Model
+	ctx  context.ProgramContext
+
+	mainMenuView mainmenuview.Model
+	combineView  combineview.Model
+	editView     editview.Model
+	updateView   updateview.Model
+	deleteView   deleteview.Model
+
 	state  view
 	view   view
-	list   list.Model
-	cursor int // which item our cursor is pointing at, This could be pulled into a nested model?
-	status int
-	err    error
-	ctx    context.ProgramContext
-
-	playlist tea.Model
-	track    tea.Model
-
 	loaded bool
 }
 
@@ -76,10 +81,10 @@ func (m Model) View() string {
 	switch m.state {
 
 	case "playlist":
-		return m.playlist.View()
+		return m.combineView.View()
 
 	case "track":
-		return m.track.View()
+		return m.editView.View()
 
 	default:
 		return MainMenuView(m)
@@ -101,7 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// if the state is PLAYLIST
 	case PLAYLIST:
 		// return a new updated model and a cmd
-		model, newCmd := m.playlist.Update(msg)
+		model, newCmd := m.combineView.Update(msg)
 		// assert returned interface into struct
 		playlistModel, ok := model.(combineview.Model)
 		if !ok {
@@ -110,31 +115,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// set cmd to the returned cmd
 		cmd = newCmd
 		// update the stored model
-		m.playlist = playlistModel
+		m.combineView = playlistModel
 
 	// if the state is TRACK
 	case TRACK:
 		// return a new updated model and a cmd
-		model, newCmd := m.track.Update(msg)
+		model, newCmd := m.editView.Update(msg)
 		// assert returned interface into struct
-		trackModel, ok := model.(tracklist.Model)
+		editViewModel, ok := model.(editview.Model)
 		if !ok {
 			panic("could not perfom assertion on track model")
 		}
 		// set cmd to the returned cmd
 		cmd = newCmd
 		// update the stored model
-		m.playlist = trackModel
+		m.editView = editViewModel
 
 	// if the state is MAIN
 	default:
 		switch msg := msg.(type) {
 		case messages.StatusMsg:
-			m.status = int(msg)
+			m.Base.Status = int(msg)
 			return m, nil
 
 		case messages.ErrMsg:
-			m.err = msg
+			m.Base.Err = msg
 			return m, tea.Quit
 
 		case tea.WindowSizeMsg:
@@ -144,8 +149,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.ScreenWidth = msg.Width
 				h, v := styles.DocStyle.GetFrameSize()
 				m.list.SetSize(msg.Width-h, msg.Height-v)
-				m.playlist = combineview.New(msg)
-				m.track = combineview.New(msg)
+				m.combineView = combineview.New(msg)
+				m.editView = editview.New(msg)
 				m.loaded = true
 			}
 			// _, v := docStyle.GetFrameSize()

@@ -1,13 +1,9 @@
 package tracklist
 
 import (
-	"context"
-	"fmt"
 	"log"
 
-	"github.com/Fomiller/mixify/internal/auth"
-	"github.com/Fomiller/mixify/internal/ui/components/basecomponents"
-	"github.com/Fomiller/mixify/internal/ui/components/track"
+	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -20,16 +16,9 @@ import (
 type view string
 
 type Model struct {
-	Width        int
-	Height       int
-	state        view
-	Focused      bool
+	Base         base.List
 	List         list.Model
 	PlaylistList []*spotify.SimplePlaylist
-	cursor       int
-	status       int
-	err          error
-	Name         string
 }
 
 func New(msg tea.WindowSizeMsg) Model {
@@ -38,32 +27,31 @@ func New(msg tea.WindowSizeMsg) Model {
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
 	delegate.Styles.NormalTitle.Foreground(lipgloss.AdaptiveColor{Light: "#3FB925", Dark: "#3FB925"})
 
-	trackList := list.New(items, delegate, 60, 50)
-	trackList.KeyMap.NextPage = key.NewBinding(
-		key.WithKeys("pgdown", "J"),
-	)
-	trackList.KeyMap.PrevPage = key.NewBinding(
-		key.WithKeys("pgup", "K"),
-	)
+	newList := list.New(items, delegate, 60, 50)
+	newList.KeyMap.NextPage = key.NewBinding(key.WithKeys("pgdown", "J"))
+	newList.KeyMap.PrevPage = key.NewBinding(key.WithKeys("pgup", "K"))
 
 	return Model{
-		Focused: false,
-		List:    trackList,
-		Width:   msg.Width,
-		Height:  msg.Height,
+		Base: base.List{
+			Focused: false,
+			Width:   msg.Width,
+			Height:  msg.Height,
+		},
+		List: newList,
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 
 	case messages.StatusMsg:
-		m.status = int(msg)
-		return m, nil
+		m.Base.Status = int(msg)
+		return m, cmd
 
 	case messages.ErrMsg:
-		m.err = msg
+		m.Base.Err = msg
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
@@ -91,12 +79,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	h, _ := styles.DocStyle.GetFrameSize()
-	switch m.Focused {
+	switch m.Base.Focused {
 	case true:
-		log.Println("TRACK WIDTH: ", m.Width)
-		return styles.FocusedStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		log.Println("TRACK WIDTH: ", m.Base.Width)
+		return styles.FocusedStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
 	default:
-		return styles.DocStyle.Width((m.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
 	}
 }
 
@@ -104,75 +92,10 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-// this needs to be optimized
-func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
-	// limit := 100
-	offset := 0
-	for {
-		result, err := auth.Client.GetPlaylistTracks(context.Background(), playlist.ID, spotify.Offset(offset))
-		if err != nil {
-			panic(err)
-		}
-
-		for _, t := range result.Tracks {
-			m.List.InsertItem(len(m.List.Items())+1,
-				track.Track{
-					TrackTitle: t.Track.Name,
-					Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
-					TrackID:    t.Track.ID,
-					PlaylistID: playlist.ID,
-					Item: basecomponents.Item{
-						Selected: true,
-					},
-				})
-		}
-
-		if result.Next != "" {
-			offset = offset + len(result.Tracks)
-			continue
-		} else {
-			break
-		}
-
-	}
-
-	return m
-}
-
-func (m Model) RemoveTracks(playlistID spotify.ID) Model {
-	newList := []list.Item{}
-	for _, t := range m.List.Items() {
-		track, ok := t.(track.Track)
-		if !ok {
-			panic("could not assert list.Item to type Item")
-		}
-		if track.PlaylistID != playlistID {
-			newList = append(newList, track)
-		}
-	}
-	m.List.SetItems(newList)
-	return m
-}
-
-func (m Model) GetSelectedTracks() []list.Item {
-	selected := []list.Item{}
-	for _, t := range m.List.Items() {
-		track, ok := t.(track.Track)
-		if !ok {
-			panic("could not assert list.Item to type Item")
-		}
-		if track.Item.Selected != false {
-			selected = append(selected, track)
-		}
-	}
-	m.List.SetItems(selected)
-	return m.List.Items()
-}
-
 func (m *Model) SetWidth(width int) {
-	m.Width = width
+	m.Base.Width = width
 }
 
 func (m *Model) SetHeight(height int) {
-	m.Height = height
+	m.Base.Height = height
 }
