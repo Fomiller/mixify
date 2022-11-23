@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/components/textinput"
+	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -23,7 +24,7 @@ type Model struct {
 	name    string
 }
 
-func New(msg tea.WindowSizeMsg) Model {
+func New(msg context.ProgramContext) Model {
 	items := []list.Item{}
 
 	delegate := list.NewDefaultDelegate()
@@ -37,8 +38,8 @@ func New(msg tea.WindowSizeMsg) Model {
 	return Model{
 		Base: base.List{
 			Focused: false,
-			Width:   msg.Width,
-			Height:  msg.Height,
+			Width:   msg.ScreenWidth,
+			Height:  msg.ScreenHeight,
 		},
 		List: list,
 	}

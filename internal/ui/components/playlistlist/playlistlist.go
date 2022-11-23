@@ -2,6 +2,7 @@ package playlistlist
 
 import (
 	"github.com/Fomiller/mixify/internal/ui/components/base"
+	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/list"
@@ -23,13 +24,13 @@ type Model struct {
 	Name         string
 }
 
-func New(msg tea.WindowSizeMsg) Model {
+func New(msg context.ProgramContext) Model {
 	return Model{
 		List: GetUserPlaylists(),
 		Base: base.List{
 			Focused: true,
-			Width:   msg.Width,
-			Height:  msg.Height,
+			Width:   msg.ScreenWidth,
+			Height:  msg.ScreenHeight,
 		},
 	}
 }

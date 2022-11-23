@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Fomiller/mixify/internal/ui/components/base"
+	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -21,7 +22,7 @@ type Model struct {
 	PlaylistList []*spotify.SimplePlaylist
 }
 
-func New(msg tea.WindowSizeMsg) Model {
+func New(msg context.ProgramContext) Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
@@ -34,8 +35,8 @@ func New(msg tea.WindowSizeMsg) Model {
 	return Model{
 		Base: base.List{
 			Focused: false,
-			Width:   msg.Width,
-			Height:  msg.Height,
+			Width:   msg.ScreenWidth,
+			Height:  msg.ScreenHeight,
 		},
 		List: newList,
 	}

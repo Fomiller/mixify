@@ -136,7 +136,7 @@ func main() {
 		defer f.Close()
 	}
 
-	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+	if err := tea.NewProgram(ui.NewModel(), tea.WithAltScreen()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -6,6 +6,8 @@ import (
 )
 
 // need to implement these down the road
+type InitMsg map[string]string
+
 type StatusMsg int
 type ErrMsg error
 type ResetStateMsg int

@@ -30,7 +30,7 @@ type view string
 type Model struct {
 	Base  base.List
 	state view
-	ctx   context.ProgramContext
+	ctx   *context.ProgramContext
 
 	playlistlist playlistlist.Model
 	tracklist    tracklist.Model
@@ -42,15 +42,16 @@ type Model struct {
 	Height int
 }
 
-func New(msg tea.WindowSizeMsg) Model {
+func NewModel(ctx context.ProgramContext) Model {
 	m := Model{
+		ctx:          &ctx,
 		state:        PLAYLIST_VIEW_1,
 		loaded:       false,
-		Width:        msg.Width,
-		Height:       msg.Height,
-		previewlist:  previewlist.New(msg),
-		playlistlist: playlistlist.New(msg),
-		tracklist:    tracklist.New(msg),
+		Width:        ctx.ScreenWidth,
+		Height:       ctx.ScreenHeight,
+		previewlist:  previewlist.New(ctx),
+		playlistlist: playlistlist.New(ctx),
+		tracklist:    tracklist.New(ctx),
 		confirm:      textinput.New(),
 	}
 
@@ -59,10 +60,10 @@ func New(msg tea.WindowSizeMsg) Model {
 
 func (m Model) ResetModel() Model {
 	return Model{
-		previewlist:  previewlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		playlistlist: playlistlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		tracklist:    tracklist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		confirm:      textinput.New(),
+		// previewlist:  previewlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		// playlistlist: playlistlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		// tracklist:    tracklist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
+		confirm: textinput.New(),
 	}
 }
 
@@ -70,7 +71,7 @@ func (m Model) Init() tea.Cmd {
 	return commands.GetUserPlaylistsCmd
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
 		cmds []tea.Cmd
 		cmd  tea.Cmd
@@ -208,7 +209,7 @@ func (m Model) View() string {
 	return output
 }
 
-func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) next(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_1:
 		m.playlistlist.Base.Focused = false
@@ -223,7 +224,7 @@ func (m Model) next(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) prev(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) prev(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_3:
 		m.previewlist.Base.Focused = false
@@ -267,8 +268,8 @@ func (m *Model) setModelSize(msg tea.WindowSizeMsg, h int, v int) {
 
 func (m *Model) loadModels(msg tea.WindowSizeMsg) {
 	m.state = PLAYLIST_VIEW_1
-	m.previewlist = previewlist.New(msg)
-	m.playlistlist = playlistlist.New(msg)
-	m.tracklist = tracklist.New(msg)
+	// m.previewlist = previewlist.New(msg)
+	// m.playlistlist = playlistlist.New(msg)
+	// m.tracklist = tracklist.New(msg)
 	m.confirm = textinput.New()
 }
