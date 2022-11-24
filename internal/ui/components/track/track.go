@@ -7,17 +7,17 @@ import (
 )
 
 type Track struct {
-	Base       base.Item
-	TrackTitle string
-	TrackID    spotify.ID
-	PlaylistID spotify.ID
-	Desc       string
+	BaseComponent base.Item
+	TrackTitle    string
+	TrackID       spotify.ID
+	PlaylistID    spotify.ID
+	Desc          string
 }
 
 func (t Track) Description() string { return t.Desc }
 func (t Track) FilterValue() string { return t.TrackTitle }
 func (t Track) Title() string {
-	if t.Base.Selected == true {
+	if t.BaseComponent.Selected == true {
 		return styles.SelectedItemStyle.Render(t.TrackTitle)
 	} else {
 		return t.TrackTitle
@@ -25,5 +25,5 @@ func (t Track) Title() string {
 }
 
 func (t *Track) ToggleSelected() {
-	t.Base.Selected = !t.Base.Selected
+	t.BaseComponent.Selected = !t.BaseComponent.Selected
 }

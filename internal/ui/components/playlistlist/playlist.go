@@ -26,7 +26,7 @@ func GetUserPlaylists() list.Model {
 		item := playlist.Playlist{
 			PlaylistTitle: emoji.RemoveAll(p.Name),
 			Desc:          p.Description,
-			Base: base.Item{
+			BaseComponent: base.Item{
 				Selected: false,
 			},
 			Playlist: p,

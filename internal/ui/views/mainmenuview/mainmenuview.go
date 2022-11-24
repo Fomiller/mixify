@@ -13,9 +13,9 @@ import (
 )
 
 type Model struct {
-	Base base.List
-	ctx  *context.ProgramContext
-	list list.Model
+	BaseComponent base.List
+	ctx           *context.ProgramContext
+	list          list.Model
 }
 
 type item struct {
@@ -43,7 +43,7 @@ func NewModel(ctx context.ProgramContext) Model {
 		item{
 			view:  views.EditView,
 			title: "Edit Playlists",
-			desc:  "Edit your favorite playlits by adding and removing tracks.",
+			desc:  "Edit your favorite playlists by adding and removing tracks.",
 		},
 	}
 
@@ -75,11 +75,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.ctx.View = views.MainMenuView
 
 	case messages.StatusMsg:
-		m.Base.Status = int(msg)
+		m.BaseComponent.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.Base.Err = msg
+		m.BaseComponent.Err = msg
 		return m, tea.Quit
 
 	// Is it a key press?
@@ -116,15 +116,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func (m *Model) SetSize() {
 	divisor := 3
-	m.SetWidth()
-	m.SetHeight()
-	m.list.SetSize((m.ctx.ScreenWidth/divisor)-5, m.ctx.ScreenHeight-5)
-}
-
-func (m *Model) SetWidth() {
-	m.Base.Width = m.ctx.ScreenWidth
-}
-
-func (m *Model) SetHeight() {
-	m.Base.Height = m.ctx.ScreenHeight
+	h, v := styles.DocStyle.GetFrameSize()
+	m.list.SetSize((m.ctx.ScreenWidth/divisor)-h, m.ctx.ScreenHeight-v)
 }

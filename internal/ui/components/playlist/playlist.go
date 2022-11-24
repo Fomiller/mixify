@@ -7,7 +7,7 @@ import (
 )
 
 type Playlist struct {
-	Base          base.Item
+	BaseComponent base.Item
 	Playlist      spotify.SimplePlaylist
 	ID            spotify.ID
 	PlaylistTitle string
@@ -15,11 +15,11 @@ type Playlist struct {
 }
 
 func (p *Playlist) ToggleSelected() {
-	p.Base.Selected = !p.Base.Selected
+	p.BaseComponent.Selected = !p.BaseComponent.Selected
 }
 
 func (p Playlist) Title() string {
-	if p.Base.Selected == true {
+	if p.BaseComponent.Selected == true {
 		return styles.SelectedItemStyle.Render(p.PlaylistTitle)
 	} else {
 		return p.PlaylistTitle

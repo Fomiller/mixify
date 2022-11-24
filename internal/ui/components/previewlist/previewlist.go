@@ -1,8 +1,6 @@
 package previewlist
 
 import (
-	"log"
-
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/components/textinput"
 	"github.com/Fomiller/mixify/internal/ui/context"
@@ -16,15 +14,15 @@ import (
 type view string
 
 type Model struct {
-	base.Component
-	Base    base.List
-	Confirm bool
-	state   view
-	List    list.Model
-	name    string
+	ctx           *context.ProgramContext
+	BaseComponent base.List
+	Confirm       bool
+	state         view
+	List          list.Model
+	name          string
 }
 
-func New(msg context.ProgramContext) Model {
+func NewModel(ctx context.ProgramContext) Model {
 	items := []list.Item{}
 
 	delegate := list.NewDefaultDelegate()
@@ -36,12 +34,11 @@ func New(msg context.ProgramContext) Model {
 	list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("pgup", "K"))
 
 	return Model{
-		Base: base.List{
-			Focused: false,
-			Width:   msg.ScreenWidth,
-			Height:  msg.ScreenHeight,
-		},
+		ctx:  &ctx,
 		List: list,
+		BaseComponent: base.List{
+			Focused: false,
+		},
 	}
 }
 
@@ -54,16 +51,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case messages.StatusMsg:
-		m.Base.Status = int(msg)
+		m.BaseComponent.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.Base.Err = msg
+		m.BaseComponent.Err = msg
 		return m, tea.Quit
-
-	case tea.WindowSizeMsg:
-		// h, v := docStyle.GetFrameSize()
-		// m.List.SetSize(msg.Width-h, msg.Height-v)
 
 	// Is it a key press?
 	case tea.KeyMsg:
@@ -85,26 +78,30 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	divisor := 3
 	h, _ := styles.DocStyle.GetFrameSize()
 
 	if m.Confirm == true {
-		input := textinput.New()
+		input := textinput.NewModel()
 		return styles.DocStyle.Render(input.View())
 	}
 
-	switch m.Base.Focused {
+	switch m.BaseComponent.Focused {
 	case true:
-		log.Println("COMBINED WIDTH: ", m.Base.Width)
-		return styles.FocusedStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
+		return styles.FocusedStyle.Width((m.ctx.ScreenWidth / divisor) - h).Render(m.List.View())
 	default:
-		return styles.DocStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.ctx.ScreenWidth / divisor) - h).Render(m.List.View())
 	}
 }
 
-func (m *Model) SetWidth(width int) {
-	m.Base.Width = width
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	// not sure this is how I want to do this
+	m.SetSize()
 }
 
-func (m *Model) SetHeight(height int) {
-	m.Base.Height = height
+func (m *Model) SetSize() {
+	divisor := 3
+	h, v := styles.DocStyle.GetFrameSize()
+	m.List.SetSize((m.ctx.ScreenWidth/divisor)-h, m.ctx.ScreenHeight-v)
 }

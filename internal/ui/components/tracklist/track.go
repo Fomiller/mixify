@@ -26,7 +26,7 @@ func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
 					Desc:       fmt.Sprintf("%v:%v", playlist.Name, playlist.ID),
 					TrackID:    t.Track.ID,
 					PlaylistID: playlist.ID,
-					Base: base.Item{
+					BaseComponent: base.Item{
 						Selected: true,
 					},
 				})
@@ -65,7 +65,7 @@ func (m Model) GetSelectedTracks() []list.Item {
 		if !ok {
 			panic("could not assert list.Item to type Item")
 		}
-		if track.Base.Selected != false {
+		if track.BaseComponent.Selected != false {
 			selected = append(selected, track)
 		}
 	}

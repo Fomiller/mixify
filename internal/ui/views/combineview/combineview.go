@@ -13,7 +13,6 @@ import (
 	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
-	"github.com/Fomiller/mixify/internal/ui/styles"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -28,9 +27,8 @@ const (
 type view string
 
 type Model struct {
-	Base  base.List
-	state view
-	ctx   *context.ProgramContext
+	BaseComponent base.List
+	ctx           *context.ProgramContext
 
 	playlistlist playlistlist.Model
 	tracklist    tracklist.Model
@@ -38,6 +36,7 @@ type Model struct {
 	confirm      textinput.Model
 
 	loaded bool
+	state  view
 	Width  int
 	Height int
 }
@@ -49,21 +48,23 @@ func NewModel(ctx context.ProgramContext) Model {
 		loaded:       false,
 		Width:        ctx.ScreenWidth,
 		Height:       ctx.ScreenHeight,
-		previewlist:  previewlist.New(ctx),
-		playlistlist: playlistlist.New(ctx),
-		tracklist:    tracklist.New(ctx),
-		confirm:      textinput.New(),
+		previewlist:  previewlist.NewModel(ctx),
+		playlistlist: playlistlist.NewModel(ctx),
+		tracklist:    tracklist.NewModel(ctx),
+		confirm:      textinput.NewModel(),
 	}
 
 	return m
 }
 
-func (m Model) ResetModel() Model {
+func (m Model) ResetModel(ctx *context.ProgramContext) Model {
 	return Model{
-		// previewlist:  previewlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		// playlistlist: playlistlist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		// tracklist:    tracklist.New(tea.WindowSizeMsg{Width: m.Width, Height: m.Height}),
-		confirm: textinput.New(),
+		ctx:          m.ctx,
+		state:        PLAYLIST_VIEW_1,
+		previewlist:  previewlist.NewModel(*m.ctx),
+		playlistlist: playlistlist.NewModel(*m.ctx),
+		tracklist:    tracklist.NewModel(*m.ctx),
+		confirm:      textinput.NewModel(),
 	}
 }
 
@@ -97,10 +98,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := styles.DocStyle.GetFrameSize()
-		m.setModelSize(msg, h, v)
-
 	case messages.CreatePlaylistMsg:
 		name := m.confirm.Inputs[0].Value()
 		desc := m.confirm.Inputs[1].Value()
@@ -108,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		m = m.ResetModel()
+		m = m.ResetModel(m.ctx)
 		return m, nil
 
 	case messages.ResetStateMsg:
@@ -116,11 +113,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 
 	case messages.StatusMsg:
-		m.Base.Status = int(msg)
+		m.BaseComponent.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.Base.Err = msg
+		m.BaseComponent.Err = msg
 		return m, tea.Quit
 
 	// Is it a key press?
@@ -162,7 +159,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				item := m.playlistlist.List.SelectedItem().(playlist.Playlist)
 				cursor := m.playlistlist.List.Index()
 
-				if item.Base.Selected == false {
+				if item.BaseComponent.Selected == false {
 					item.ToggleSelected()
 					m.playlistlist.List.SetItem(cursor, item)
 					m.tracklist = m.tracklist.InsertTracks(item.Playlist)
@@ -212,13 +209,13 @@ func (m Model) View() string {
 func (m Model) next(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_1:
-		m.playlistlist.Base.Focused = false
-		m.tracklist.Base.Focused = true
+		m.playlistlist.BaseComponent.Focused = false
+		m.tracklist.BaseComponent.Focused = true
 		m.state = PLAYLIST_VIEW_2
 
 	case PLAYLIST_VIEW_2:
-		m.tracklist.Base.Focused = false
-		m.previewlist.Base.Focused = true
+		m.tracklist.BaseComponent.Focused = false
+		m.previewlist.BaseComponent.Focused = true
 		m.state = PLAYLIST_VIEW_3
 	}
 	return m, nil
@@ -227,43 +224,16 @@ func (m Model) next(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) prev(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.state {
 	case PLAYLIST_VIEW_3:
-		m.previewlist.Base.Focused = false
-		m.tracklist.Base.Focused = true
+		m.previewlist.BaseComponent.Focused = false
+		m.tracklist.BaseComponent.Focused = true
 		m.state = PLAYLIST_VIEW_2
 
 	case PLAYLIST_VIEW_2:
-		m.playlistlist.Base.Focused = true
-		m.tracklist.Base.Focused = false
+		m.playlistlist.BaseComponent.Focused = true
+		m.tracklist.BaseComponent.Focused = false
 		m.state = PLAYLIST_VIEW_1
 	}
 	return m, nil
-}
-
-func (m *Model) setModelSize(msg tea.WindowSizeMsg, h int, v int) {
-	divisor := 3
-	m.previewlist.SetHeight(msg.Height)
-	m.previewlist.SetWidth(msg.Width)
-
-	m.tracklist.SetHeight(msg.Height)
-	m.tracklist.SetWidth(msg.Width)
-
-	m.playlistlist.SetHeight(msg.Height)
-	m.playlistlist.SetWidth(msg.Width)
-
-	m.previewlist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
-	m.tracklist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
-	m.playlistlist.List.SetSize((msg.Width/divisor)-h, msg.Height-v)
-
-	// log.Print(msg)
-	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
-	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
-	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
-	// log.Printf("------------------------------")
-	// log.Printf("select - w:%v h:%v", selectModel.List.Width(), selectModel.List.Height())
-	// log.Printf("Combined - w:%v h:%v", combinedModel.List.Width(), combinedModel.List.Height())
-	// log.Printf("Track - w:%v h:%v", trackModel.List.Width(), trackModel.List.Height())
-	// log.Printf("------------------------------")
-	// log.Printf("------------------------------")
 }
 
 func (m *Model) loadModels(msg tea.WindowSizeMsg) {
@@ -271,5 +241,19 @@ func (m *Model) loadModels(msg tea.WindowSizeMsg) {
 	// m.previewlist = previewlist.New(msg)
 	// m.playlistlist = playlistlist.New(msg)
 	// m.tracklist = tracklist.New(msg)
-	m.confirm = textinput.New()
+	m.confirm = textinput.NewModel()
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	// not sure this is how I want to do this
+	m.SetSize()
+}
+
+func (m *Model) SetSize() {
+	// m.SetWidth()
+	// m.SetHeight()
+	m.playlistlist.UpdateProgramContext(m.ctx)
+	m.tracklist.UpdateProgramContext(m.ctx)
+	m.previewlist.UpdateProgramContext(m.ctx)
 }

@@ -18,9 +18,9 @@ import (
 )
 
 type Model struct {
-	Base base.List
-	ctx  context.ProgramContext
-	keys keys.KeyMap
+	BaseComponent base.List
+	ctx           context.ProgramContext
+	keys          keys.KeyMap
 
 	view         views.View
 	mainMenuView mainmenuview.Model
@@ -44,7 +44,7 @@ func NewModel() Model {
 	}
 
 	m.mainMenuView = mainmenuview.NewModel(m.ctx)
-	// m.combineView = combineview.New(m.ctx)
+	m.combineView = combineview.NewModel(m.ctx)
 	// m.editView = editview.New(m.ctx)
 	return m
 }
@@ -82,7 +82,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.BackSpace):
-			m.view = views.MainMenuView
+			if m.ctx.View != views.MainMenuView {
+				m.ctx.View = views.MainMenuView
+				return m, nil
+			}
 
 		// These keys should exit the program.
 		case key.Matches(msg, m.keys.Quit):
@@ -96,15 +99,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// any initial actions can go here
 
 	// might not be needed
-	case messages.BackMsg:
-		m.view = views.MainMenuView
+	// case messages.BackMsg:
+	// 	m.ctx.View = views.MainMenuView
 
 	case messages.StatusMsg:
-		m.Base.Status = int(msg)
+		m.BaseComponent.Status = int(msg)
 		return m, nil
 
 	case messages.ErrMsg:
-		m.Base.Err = msg
+		m.BaseComponent.Err = msg
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
@@ -127,11 +130,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-// func (m *Model) switchSelectedView() views.View {
-// 	// should this be from ctx?
-// 	return m.view
-// }
-
 func (m *Model) onWindowSizeChange(msg tea.WindowSizeMsg) {
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
@@ -141,17 +139,14 @@ func (m *Model) onWindowSizeChange(msg tea.WindowSizeMsg) {
 
 func (m *Model) syncProgramContext() {
 	m.mainMenuView.UpdateProgramContext(&m.ctx)
-	// m.combineView.UpdateProgramContext(&m.ctx)
+	m.combineView.UpdateProgramContext(&m.ctx)
 	// m.editView.UpdateProgramContext(&m.ctx)
 	// m.createView.UpdateProgramContext(&m.ctx)
 }
 
-func (m *Model) syncMainContentWidth() {
-	// m.ctx.MainContentWidth = m.ctx.ScreenWidth - offset
-}
-
 func (m *Model) updateCurrentView(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
+
 	switch m.ctx.View {
 	case views.MainMenuView:
 		m.mainMenuView, cmd = m.mainMenuView.Update(msg)
@@ -161,7 +156,11 @@ func (m *Model) updateCurrentView(msg tea.Msg) tea.Cmd {
 
 	case views.EditView:
 		m.editView, cmd = m.editView.Update(msg)
-
 	}
+
 	return cmd
 }
+
+// func (m *Model) syncMainContentWidth() {
+// 	// m.ctx.MainContentWidth = m.ctx.ScreenWidth - offset
+// }

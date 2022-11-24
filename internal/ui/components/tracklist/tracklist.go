@@ -1,8 +1,6 @@
 package tracklist
 
 import (
-	"log"
-
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
@@ -17,12 +15,17 @@ import (
 type view string
 
 type Model struct {
-	Base         base.List
-	List         list.Model
-	PlaylistList []*spotify.SimplePlaylist
+	ctx           *context.ProgramContext
+	BaseComponent base.List
+	List          list.Model
+	PlaylistList  []*spotify.SimplePlaylist
 }
 
-func New(msg context.ProgramContext) Model {
+func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func NewModel(ctx context.ProgramContext) Model {
 	items := []list.Item{}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.SelectedTitle.Foreground(lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"})
@@ -33,12 +36,11 @@ func New(msg context.ProgramContext) Model {
 	newList.KeyMap.PrevPage = key.NewBinding(key.WithKeys("pgup", "K"))
 
 	return Model{
-		Base: base.List{
-			Focused: false,
-			Width:   msg.ScreenWidth,
-			Height:  msg.ScreenHeight,
-		},
+		ctx:  &ctx,
 		List: newList,
+		BaseComponent: base.List{
+			Focused: false,
+		},
 	}
 }
 
@@ -48,16 +50,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case messages.StatusMsg:
-		m.Base.Status = int(msg)
+		m.BaseComponent.Status = int(msg)
 		return m, cmd
 
 	case messages.ErrMsg:
-		m.Base.Err = msg
+		m.BaseComponent.Err = msg
 		return m, tea.Quit
-
-	case tea.WindowSizeMsg:
-		// // h, v := docStyle.GetFrameSize()
-		// m.List.SetSize(msg.Width/3, msg.Height)
 
 	// Is it a key press?
 	case tea.KeyMsg:
@@ -79,24 +77,24 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	divisor := 3
 	h, _ := styles.DocStyle.GetFrameSize()
-	switch m.Base.Focused {
+	switch m.BaseComponent.Focused {
 	case true:
-		log.Println("TRACK WIDTH: ", m.Base.Width)
-		return styles.FocusedStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
+		return styles.FocusedStyle.Width((m.ctx.ScreenWidth / divisor) - h).Render(m.List.View())
 	default:
-		return styles.DocStyle.Width((m.Base.Width / 3) - h).Render(m.List.View())
+		return styles.DocStyle.Width((m.ctx.ScreenWidth / divisor) - h).Render(m.List.View())
 	}
 }
 
-func (m Model) Init() tea.Cmd {
-	return nil
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	// not sure this is how I want to do this
+	m.SetSize()
 }
 
-func (m *Model) SetWidth(width int) {
-	m.Base.Width = width
-}
-
-func (m *Model) SetHeight(height int) {
-	m.Base.Height = height
+func (m *Model) SetSize() {
+	divisor := 3
+	h, v := styles.DocStyle.GetFrameSize()
+	m.List.SetSize((m.ctx.ScreenWidth/divisor)-h, m.ctx.ScreenHeight-v)
 }

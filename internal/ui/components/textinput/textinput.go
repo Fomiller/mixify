@@ -28,7 +28,7 @@ type Model struct {
 	cursorMode textinput.CursorMode
 }
 
-func New() Model {
+func NewModel() Model {
 	m := Model{
 		Inputs: make([]textinput.Model, 2),
 	}
