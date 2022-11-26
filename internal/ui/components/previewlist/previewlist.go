@@ -2,7 +2,6 @@ package previewlist
 
 import (
 	"github.com/Fomiller/mixify/internal/ui/components/base"
-	"github.com/Fomiller/mixify/internal/ui/components/textinput"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
@@ -80,11 +79,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	divisor := 3
 	h, _ := styles.DocStyle.GetFrameSize()
-
-	if m.Confirm == true {
-		input := textinput.NewModel()
-		return styles.DocStyle.Render(input.View())
-	}
 
 	switch m.BaseComponent.Focused {
 	case true:

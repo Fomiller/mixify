@@ -17,11 +17,3 @@ func GetUserCmd() tea.Msg {
 	}
 	return messages.UserMsg(user)
 }
-
-func GetUserPlaylistsCmd() tea.Msg {
-	playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	return messages.PlaylistMsg(playlist)
-}

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/commands"
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,6 +27,7 @@ type Model struct {
 	FocusIndex int
 	Inputs     []textinput.Model
 	cursorMode textinput.CursorMode
+	Tracks     *list.Model
 }
 
 func NewModel() Model {
@@ -86,8 +88,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
 			if s == "enter" && m.FocusIndex == len(m.Inputs) {
-				// cmd = playlist.CreatePlaylistCmd(m.Inputs[0].Value(), m.Inputs[1].Value())
-				return m, messages.CreatePlaylistCmd
+				name := m.Inputs[0].Value()
+				description := m.Inputs[1].Value()
+				cmd := commands.CreatePlaylistCmd(name, description, m.Tracks.Items())
+				return m, cmd
 			}
 
 			// Cycle indexes

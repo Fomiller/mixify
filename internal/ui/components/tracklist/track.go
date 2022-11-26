@@ -11,7 +11,7 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
+func (m *Model) InsertTracks(playlist spotify.SimplePlaylist) {
 	offset := 0
 	for {
 		result, err := auth.Client.GetPlaylistTracks(context.Background(), playlist.ID, spotify.Offset(offset))
@@ -40,10 +40,9 @@ func (m Model) InsertTracks(playlist spotify.SimplePlaylist) Model {
 		}
 
 	}
-
-	return m
 }
-func (m Model) RemoveTracks(playlistID spotify.ID) Model {
+
+func (m *Model) RemoveTracks(playlistID spotify.ID) {
 	newList := []list.Item{}
 	for _, t := range m.List.Items() {
 		track, ok := t.(track.Track)
@@ -55,7 +54,6 @@ func (m Model) RemoveTracks(playlistID spotify.ID) Model {
 		}
 	}
 	m.List.SetItems(newList)
-	return m
 }
 
 func (m Model) GetSelectedTracks() []list.Item {

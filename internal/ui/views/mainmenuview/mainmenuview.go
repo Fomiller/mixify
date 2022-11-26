@@ -1,8 +1,6 @@
 package mainmenuview
 
 import (
-	"log"
-
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/messages"
@@ -47,10 +45,7 @@ func NewModel(ctx context.ProgramContext) Model {
 		},
 	}
 
-	log.Println("main menu width: ", ctx.ScreenWidth)
-	log.Println("main menu height: ", ctx.ScreenHeight)
 	m.list = list.New(items, list.NewDefaultDelegate(), ctx.ScreenWidth, ctx.ScreenHeight)
-	log.Println(m.list.Items())
 	return m
 }
 
@@ -64,7 +59,6 @@ func (m Model) View() string {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	log.Println("mainmenu being updated")
 	var (
 		cmds []tea.Cmd
 		cmd  tea.Cmd

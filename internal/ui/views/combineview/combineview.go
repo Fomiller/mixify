@@ -1,8 +1,6 @@
 package combineview
 
 import (
-	"log"
-
 	"github.com/Fomiller/mixify/internal/ui/commands"
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/components/playlist"
@@ -51,21 +49,22 @@ func NewModel(ctx context.ProgramContext) Model {
 		previewlist:  previewlist.NewModel(ctx),
 		playlistlist: playlistlist.NewModel(ctx),
 		tracklist:    tracklist.NewModel(ctx),
-		confirm:      textinput.NewModel(),
 	}
+	m.confirm = textinput.NewModel()
 
 	return m
 }
 
 func (m Model) ResetModel(ctx *context.ProgramContext) Model {
-	return Model{
+	newModel := Model{
 		ctx:          m.ctx,
 		state:        PLAYLIST_VIEW_1,
 		previewlist:  previewlist.NewModel(*m.ctx),
 		playlistlist: playlistlist.NewModel(*m.ctx),
 		tracklist:    tracklist.NewModel(*m.ctx),
-		confirm:      textinput.NewModel(),
 	}
+	newModel.confirm = textinput.NewModel()
+	return newModel
 }
 
 func (m Model) Init() tea.Cmd {
@@ -98,15 +97,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case messages.CreatePlaylistMsg:
-		name := m.confirm.Inputs[0].Value()
-		desc := m.confirm.Inputs[1].Value()
-		err := m.previewlist.CreatePlaylist(name, desc)
-		if err != nil {
-			log.Fatal(err)
-		}
+	case messages.CreatePlaylistSuccessMsg:
 		m = m.ResetModel(m.ctx)
 		return m, nil
+
+	case messages.CreatePlaylistErrorMsg:
+		m.BaseComponent.Err = msg.Err
+		return m, tea.Quit
 
 	case messages.ResetStateMsg:
 		m.state = PLAYLIST_VIEW_1
@@ -162,13 +159,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if item.BaseComponent.Selected == false {
 					item.ToggleSelected()
 					m.playlistlist.List.SetItem(cursor, item)
-					m.tracklist = m.tracklist.InsertTracks(item.Playlist)
+					m.tracklist.InsertTracks(item.Playlist)
 					selectedTracks := m.tracklist.GetSelectedTracks()
 					m.previewlist.List.SetItems(selectedTracks)
 				} else {
 					item.ToggleSelected()
 					m.playlistlist.List.SetItem(cursor, item)
-					m.tracklist = m.tracklist.RemoveTracks(item.Playlist.ID)
+					m.tracklist.RemoveTracks(item.Playlist.ID)
 					selectedTracks := m.tracklist.GetSelectedTracks()
 					m.previewlist.List.SetItems(selectedTracks)
 
@@ -187,6 +184,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			case PLAYLIST_VIEW_3:
 				m.state = PLAYLIST_VIEW_4
+				m.confirm.Tracks = &m.previewlist.List
 				return m, nil
 			}
 		}
@@ -236,23 +234,8 @@ func (m Model) prev(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) loadModels(msg tea.WindowSizeMsg) {
-	m.state = PLAYLIST_VIEW_1
-	// m.previewlist = previewlist.New(msg)
-	// m.playlistlist = playlistlist.New(msg)
-	// m.tracklist = tracklist.New(msg)
-	m.confirm = textinput.NewModel()
-}
-
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	// not sure this is how I want to do this
-	m.SetSize()
-}
-
-func (m *Model) SetSize() {
-	// m.SetWidth()
-	// m.SetHeight()
 	m.playlistlist.UpdateProgramContext(m.ctx)
 	m.tracklist.UpdateProgramContext(m.ctx)
 	m.previewlist.UpdateProgramContext(m.ctx)

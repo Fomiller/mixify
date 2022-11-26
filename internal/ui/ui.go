@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"log"
-
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
 	"github.com/Fomiller/mixify/internal/ui/keys"
@@ -75,8 +73,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd     tea.Cmd
 		viewCmd tea.Cmd
 	)
-	log.Println("MAIN MSG: ", msg)
-	log.Println("CONTEXT: ", m.ctx)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
