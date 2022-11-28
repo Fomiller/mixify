@@ -2,6 +2,7 @@ package textinput // A simple example demonstrating the use of multiple text inp
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/Fomiller/mixify/internal/ui/commands"
@@ -63,8 +64,11 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	log.Println("CONFIRM UPDATE")
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		log.Println("CONFIRM ", msg)
+		log.Println("CONFRIM: ", msg.String())
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -83,7 +87,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		// Set focus to next input
 		case "tab", "shift+tab", "enter", "up", "down":
+			log.Println("PRESSING ENTER")
 			s := msg.String()
+			log.Println("CONFIRM INNER", s)
 
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.

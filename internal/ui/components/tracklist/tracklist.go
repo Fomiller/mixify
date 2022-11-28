@@ -3,7 +3,6 @@ package tracklist
 import (
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
-	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -11,8 +10,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zmb3/spotify/v2"
 )
-
-type view string
 
 type Model struct {
 	ctx           *context.ProgramContext
@@ -47,31 +44,6 @@ func NewModel(ctx context.ProgramContext) Model {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	switch msg := msg.(type) {
-
-	case messages.StatusMsg:
-		m.BaseComponent.Status = int(msg)
-		return m, cmd
-
-	case messages.ErrMsg:
-		m.BaseComponent.Err = msg
-		return m, tea.Quit
-
-	// Is it a key press?
-	case tea.KeyMsg:
-		switch msg.String() {
-		// return to previous view with backspace
-		case tea.KeyBackspace.String():
-			return m, func() tea.Msg {
-				return messages.BackMsg(true)
-			}
-
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			return m, tea.Quit
-
-		}
-	}
 	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }

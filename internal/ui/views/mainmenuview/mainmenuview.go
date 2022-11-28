@@ -3,7 +3,6 @@ package mainmenuview
 import (
 	"github.com/Fomiller/mixify/internal/ui/components/base"
 	"github.com/Fomiller/mixify/internal/ui/context"
-	"github.com/Fomiller/mixify/internal/ui/messages"
 	"github.com/Fomiller/mixify/internal/ui/styles"
 	"github.com/Fomiller/mixify/internal/ui/views"
 	"github.com/charmbracelet/bubbles/list"
@@ -65,50 +64,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
-	case messages.BackMsg:
-		m.ctx.View = views.MainMenuView
-
-	case messages.StatusMsg:
-		m.BaseComponent.Status = int(msg)
-		return m, nil
-
-	case messages.ErrMsg:
-		m.BaseComponent.Err = msg
-		return m, tea.Quit
-
 	// Is it a key press?
 	case tea.KeyMsg:
 		switch msg.String() {
-		// return to previous view with backspace
-		case tea.KeyBackspace.String():
-			m.ctx.View = views.MainMenuView
-
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			return m, tea.Quit
-
 		case "enter", " ":
 			m.ctx.View = m.list.SelectedItem().(item).view
 		}
 	}
 
 	m.list, cmd = m.list.Update(msg)
-
 	cmds = append(
 		cmds,
 		cmd,
 	)
-
 	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	// not sure this is how I want to do this
-	m.SetSize()
+	m.SetComponentSize()
 }
 
-func (m *Model) SetSize() {
+func (m *Model) SetComponentSize() {
 	divisor := 3
 	h, v := styles.DocStyle.GetFrameSize()
 	m.list.SetSize((m.ctx.ScreenWidth/divisor)-h, m.ctx.ScreenHeight-v)

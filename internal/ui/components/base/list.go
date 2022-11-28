@@ -1,6 +1,8 @@
 package base
 
-import "github.com/Fomiller/mixify/internal/ui/messages"
+import (
+	"github.com/Fomiller/mixify/internal/ui/messages"
+)
 
 type List struct {
 	Focused bool

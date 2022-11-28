@@ -62,6 +62,7 @@ type KeyMap struct {
 	Quit          key.Binding
 	BackSpace     key.Binding
 	Select        key.Binding
+	Escape        key.Binding
 }
 
 var Keys = KeyMap{
@@ -80,7 +81,8 @@ var Keys = KeyMap{
 	SwitchView:    key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "switch view")),
 	Search:        key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
 	Help:          key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-	Quit:          key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q", "quit")),
-	BackSpace:     key.NewBinding(key.WithKeys("backspace"), key.WithHelp("backspace", "return to the previous view")),
-	Select:        key.NewBinding(key.WithKeys("enter", "")),
+	Quit:          key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
+	// BackSpace:     key.NewBinding(key.WithKeys("backspace"), key.WithHelp("backspace", "return to the previous view")),
+	Select: key.NewBinding(key.WithKeys("enter", "")),
+	Escape: key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "return to the previous view")),
 }

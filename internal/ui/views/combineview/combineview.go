@@ -10,19 +10,22 @@ import (
 	"github.com/Fomiller/mixify/internal/ui/components/track"
 	"github.com/Fomiller/mixify/internal/ui/components/tracklist"
 	"github.com/Fomiller/mixify/internal/ui/context"
+	"github.com/Fomiller/mixify/internal/ui/keys"
 	"github.com/Fomiller/mixify/internal/ui/messages"
+	"github.com/Fomiller/mixify/internal/ui/views"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-const (
-	PLAYLIST_VIEW_1 view = "VIEW_1"
-	PLAYLIST_VIEW_2 view = "VIEW_2"
-	PLAYLIST_VIEW_3 view = "VIEW_3"
-	PLAYLIST_VIEW_4 view = "VIEW_4"
-)
+type section string
 
-type view string
+const (
+	PlaylistSection section = "PlaylistSection"
+	TrackSection    section = "TrackSection"
+	PreviewSection  section = "PreviewSection"
+	ConfirmSection  section = "ConfirmSection"
+)
 
 type Model struct {
 	BaseComponent base.List
@@ -33,22 +36,22 @@ type Model struct {
 	previewlist  previewlist.Model
 	confirm      textinput.Model
 
-	loaded bool
-	state  view
-	Width  int
-	Height int
+	loaded         bool
+	CurrentSection section
+	Width          int
+	Height         int
 }
 
 func NewModel(ctx context.ProgramContext) Model {
 	m := Model{
-		ctx:          &ctx,
-		state:        PLAYLIST_VIEW_1,
-		loaded:       false,
-		Width:        ctx.ScreenWidth,
-		Height:       ctx.ScreenHeight,
-		previewlist:  previewlist.NewModel(ctx),
-		playlistlist: playlistlist.NewModel(ctx),
-		tracklist:    tracklist.NewModel(ctx),
+		ctx:            &ctx,
+		CurrentSection: PlaylistSection,
+		loaded:         false,
+		Width:          ctx.ScreenWidth,
+		Height:         ctx.ScreenHeight,
+		previewlist:    previewlist.NewModel(ctx),
+		playlistlist:   playlistlist.NewModel(ctx),
+		tracklist:      tracklist.NewModel(ctx),
 	}
 	m.confirm = textinput.NewModel()
 
@@ -57,11 +60,11 @@ func NewModel(ctx context.ProgramContext) Model {
 
 func (m Model) ResetModel(ctx *context.ProgramContext) Model {
 	newModel := Model{
-		ctx:          m.ctx,
-		state:        PLAYLIST_VIEW_1,
-		previewlist:  previewlist.NewModel(*m.ctx),
-		playlistlist: playlistlist.NewModel(*m.ctx),
-		tracklist:    tracklist.NewModel(*m.ctx),
+		ctx:            m.ctx,
+		CurrentSection: PlaylistSection,
+		previewlist:    previewlist.NewModel(*m.ctx),
+		playlistlist:   playlistlist.NewModel(*m.ctx),
+		tracklist:      tracklist.NewModel(*m.ctx),
 	}
 	newModel.confirm = textinput.NewModel()
 	return newModel
@@ -77,25 +80,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd  tea.Cmd
 	)
 
-	// update nested models based off of state
-	switch m.state {
-	case PLAYLIST_VIEW_1:
-		m.playlistlist, cmd = m.playlistlist.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case PLAYLIST_VIEW_2:
-		m.tracklist, cmd = m.tracklist.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case PLAYLIST_VIEW_3:
-		m.previewlist, cmd = m.previewlist.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case PLAYLIST_VIEW_4:
-		m.confirm, cmd = m.confirm.Update(msg)
-		cmds = append(cmds, cmd)
-	}
-
 	switch msg := msg.(type) {
 	case messages.CreatePlaylistSuccessMsg:
 		m = m.ResetModel(m.ctx)
@@ -105,54 +89,30 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.BaseComponent.Err = msg.Err
 		return m, tea.Quit
 
-	case messages.ResetStateMsg:
-		m.state = PLAYLIST_VIEW_1
-		return m, nil
-
-	case messages.StatusMsg:
-		m.BaseComponent.Status = int(msg)
-		return m, nil
-
-	case messages.ErrMsg:
-		m.BaseComponent.Err = msg
-		return m, tea.Quit
-
 	// Is it a key press?
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
+		switch {
+		case key.Matches(msg, keys.Keys.Escape):
+			if m.ctx.View != views.MainMenuView {
+				m.ctx.View = views.MainMenuView
+				return m, nil
+			}
+		}
+
 		switch msg.String() {
-		// return to previous view with backspace
-		case tea.KeyBackspace.String():
-			switch m.state {
-			case PLAYLIST_VIEW_4:
-			// override backspace to allow for text input
-			default:
-				return m, func() tea.Msg {
-					return messages.BackMsg(true)
-				}
-			}
 
-		// These keys should exit the program.
-		case "esc":
-			switch m.state {
-			case PLAYLIST_VIEW_4:
-				m.state = PLAYLIST_VIEW_3
-			}
-			return m, nil
-
-		case "ctrl+c", "q":
-			return m, tea.Quit
-
-		// The "down" and "j" keys move the cursor down
+		//TODO move this logic into the ui model.
 		case "right", "l":
 			return m.next(msg)
 
+		//TODO move this logic into the ui model.
 		case "left", "h":
 			return m.prev(msg)
 
 		case "enter", " ":
-			switch m.state {
-			case PLAYLIST_VIEW_1:
+			switch m.CurrentSection {
+			case PlaylistSection:
 				item := m.playlistlist.List.SelectedItem().(playlist.Playlist)
 				cursor := m.playlistlist.List.Index()
 
@@ -172,7 +132,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				return m, nil
 
-			case PLAYLIST_VIEW_2:
+			case TrackSection:
 				item := m.tracklist.List.SelectedItem().(track.Track)
 				cursor := m.tracklist.List.Index()
 
@@ -182,13 +142,33 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.previewlist.List.SetItems(selectedTracks)
 				return m, nil
 
-			case PLAYLIST_VIEW_3:
-				m.state = PLAYLIST_VIEW_4
+			case PreviewSection:
+				m.CurrentSection = ConfirmSection
 				m.confirm.Tracks = &m.previewlist.List
 				return m, nil
 			}
 		}
 	}
+
+	// update nested models based off of state
+	switch m.CurrentSection {
+	case PlaylistSection:
+		m.playlistlist, cmd = m.playlistlist.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case TrackSection:
+		m.tracklist, cmd = m.tracklist.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case PreviewSection:
+		m.previewlist, cmd = m.previewlist.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case ConfirmSection:
+		m.confirm, cmd = m.confirm.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -196,7 +176,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	var output string
 
-	if m.state == PLAYLIST_VIEW_4 {
+	if m.CurrentSection == ConfirmSection {
 		output = m.confirm.View()
 	} else {
 		output = lipgloss.JoinHorizontal(lipgloss.Center, m.playlistlist.View(), m.tracklist.View(), m.previewlist.View())
@@ -205,31 +185,31 @@ func (m Model) View() string {
 }
 
 func (m Model) next(msg tea.Msg) (Model, tea.Cmd) {
-	switch m.state {
-	case PLAYLIST_VIEW_1:
+	switch m.CurrentSection {
+	case PlaylistSection:
 		m.playlistlist.BaseComponent.Focused = false
 		m.tracklist.BaseComponent.Focused = true
-		m.state = PLAYLIST_VIEW_2
+		m.CurrentSection = TrackSection
 
-	case PLAYLIST_VIEW_2:
+	case TrackSection:
 		m.tracklist.BaseComponent.Focused = false
 		m.previewlist.BaseComponent.Focused = true
-		m.state = PLAYLIST_VIEW_3
+		m.CurrentSection = PreviewSection
 	}
 	return m, nil
 }
 
 func (m Model) prev(msg tea.Msg) (Model, tea.Cmd) {
-	switch m.state {
-	case PLAYLIST_VIEW_3:
+	switch m.CurrentSection {
+	case PreviewSection:
 		m.previewlist.BaseComponent.Focused = false
 		m.tracklist.BaseComponent.Focused = true
-		m.state = PLAYLIST_VIEW_2
+		m.CurrentSection = TrackSection
 
-	case PLAYLIST_VIEW_2:
+	case TrackSection:
 		m.playlistlist.BaseComponent.Focused = true
 		m.tracklist.BaseComponent.Focused = false
-		m.state = PLAYLIST_VIEW_1
+		m.CurrentSection = PlaylistSection
 	}
 	return m, nil
 }

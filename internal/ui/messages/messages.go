@@ -26,9 +26,5 @@ type PrevMsg bool
 type UserMsg *spotify.PrivateUser
 type PlaylistMsg *spotify.SimplePlaylistPage
 
-type errMsg struct{ err error }
-
 type CreatePlaylistSuccessMsg bool
 type CreatePlaylistErrorMsg struct{ Err error }
-
-func (e errMsg) Error() string { return e.err.Error() }

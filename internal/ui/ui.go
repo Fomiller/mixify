@@ -77,26 +77,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.BackSpace):
-			if m.ctx.View != views.MainMenuView {
+		case key.Matches(msg, m.keys.Escape):
+			// escape key logic based on current view/section
+			switch m.ctx.View {
+			case views.CombineView:
+				if m.combineView.CurrentSection == combineview.ConfirmSection {
+					m.combineView.CurrentSection = combineview.PreviewSection
+				} else {
+					m.ctx.View = views.MainMenuView
+				}
+				return m, nil
+
+			case views.EditView:
 				m.ctx.View = views.MainMenuView
 				return m, nil
 			}
 
-		// These keys should exit the program.
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-
-			// case Key.Matches(msg, m.keys.Select):
-			// 	m.view = m.list.SelectedItem().(item).view
 		}
-
-	case messages.InitMsg:
-	// any initial actions can go here
-
-	// might not be needed
-	// case messages.BackMsg:
-	// 	m.ctx.View = views.MainMenuView
 
 	case messages.StatusMsg:
 		m.BaseComponent.Status = int(msg)
@@ -107,7 +106,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
-		// this will update the main ui models context ScreenHeight/Width
 		m.onWindowSizeChange(msg)
 	}
 
