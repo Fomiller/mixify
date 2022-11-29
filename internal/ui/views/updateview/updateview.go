@@ -1,4 +1,4 @@
-package createview
+package updateview
 
 import tea "github.com/charmbracelet/bubbletea"
 

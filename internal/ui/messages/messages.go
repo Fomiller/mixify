@@ -1,11 +1,12 @@
 package messages
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zmb3/spotify/v2"
 )
 
 // need to implement these down the road
+type InitMsg map[string]string
+
 type StatusMsg int
 type ErrMsg error
 type ResetStateMsg int
@@ -13,7 +14,10 @@ type ResetStateMsg int
 type BackMsg bool
 type ExitInputMsg bool
 
-type CreatePlaylistMsg bool
+type CreatePlaylistMsg struct {
+	PlaylistName string
+	Description  string
+}
 
 // I think these are not needed
 type NextMsg bool
@@ -22,10 +26,5 @@ type PrevMsg bool
 type UserMsg *spotify.PrivateUser
 type PlaylistMsg *spotify.SimplePlaylistPage
 
-type errMsg struct{ err error }
-
-func (e errMsg) Error() string { return e.err.Error() }
-
-func CreatePlaylistCmd() tea.Msg {
-	return CreatePlaylistMsg(true)
-}
+type CreatePlaylistSuccessMsg bool
+type CreatePlaylistErrorMsg struct{ Err error }

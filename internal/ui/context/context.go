@@ -1,6 +1,9 @@
 package context
 
+import "github.com/Fomiller/mixify/internal/ui/views"
+
 type ProgramContext struct {
-	ScreenHeight int
+	View         views.View
 	ScreenWidth  int
+	ScreenHeight int
 }

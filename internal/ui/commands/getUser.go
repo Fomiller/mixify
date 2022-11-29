@@ -1,4 +1,4 @@
-package playlistSelect
+package commands
 
 import (
 	"context"
@@ -16,12 +16,4 @@ func GetUserCmd() tea.Msg {
 		log.Fatal(err)
 	}
 	return messages.UserMsg(user)
-}
-
-func GetUserPlaylistsCmd() tea.Msg {
-	playlist, err := auth.Client.CurrentUsersPlaylists(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	return messages.PlaylistMsg(playlist)
 }

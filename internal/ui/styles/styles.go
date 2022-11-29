@@ -44,4 +44,10 @@ var (
 			Margin(1, 2).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("62"))
+
+	SelectedItemStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("62"))
+
+	Selected   = lipgloss.AdaptiveColor{Light: "#1DB954", Dark: "#1DB954"}
+	Unselected = lipgloss.AdaptiveColor{Light: "#1DB925", Dark: "#1DB925"}
 )
