@@ -1,6 +1,26 @@
 # Mixify
 
-Mixify is a tui application that helps you combine and edit spotify playlists, built with the [bubbletea](https://github.com/charmbracelet/bubbletea) framework
+Mixify is a tui application that helps you combine, create, edit, and delete spotify playlists
+
+
+
+## Install
+### Requirements
+go version >= 1.18
+
+```
+go install github.com/fomiller/mixify
+```
+
+Register your application with spotify and export your client id and secret
+```
+SPOTIFY_ID=<id>
+SPOTIFY_SECRET=<secret>
+```
+
+## PKGs Used
+[bubbletea](https://github.com/charmbracelet/bubbletea)
+[spotify]("github.com/zmb3/spotify/v2")
 
 ## TODO
 create menu model that lists all other models, when the model is selected the main model changes to display the selected models view
@@ -11,9 +31,9 @@ create menu model that lists all other models, when the model is selected the ma
 [] store api token in .config/mixify
 [] store refresh token
 [] dynamic state in nested playlist models
-[] change playlist nested models to be fancy tea list models
+[x] change playlist nested models to be fancy tea list models
 [] create styles for bubble tea components. spofify colors
-[] build out readme
+[x] build out readme
 [] change menu items to be names of actions "create", "edit", "queue", "combine", "update", "preview" "select"
 [x] fix vertial scrolling with left and right controls
 [x] fix height and width of screen

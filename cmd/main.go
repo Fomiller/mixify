@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Fomiller/mixify/pkg/auth"
-	"github.com/Fomiller/mixify/pkg/ui"
+	"github.com/Fomiller/mixify/internal/auth"
+	"github.com/Fomiller/mixify/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
 	"github.com/zmb3/spotify/v2"
@@ -127,7 +127,16 @@ func main() {
 	// tui setup
 	// rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(ui.New(), tea.WithAltScreen()).Start(); err != nil {
+	if len(os.Getenv("DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	}
+
+	if err := tea.NewProgram(ui.NewModel(), tea.WithAltScreen()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
